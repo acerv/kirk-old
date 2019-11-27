@@ -25,8 +25,8 @@ def test_runner_run(tmp_path, mocker):
         jobs:
             - name: test_name0
     """)
+    # pylint: disable=no-member
     if MOCKED:
-        # pylint: disable=no-member
         mocker.patch('jenkins.Jenkins.__init__', return_value=None)
         mocker.patch('jenkins.Jenkins.get_job_config')
         mocker.patch('jenkins.Jenkins.create_job')  # cannot test xml
@@ -38,7 +38,7 @@ def test_runner_run(tmp_path, mocker):
 
     projects = kirk.loader.load(str(tmp_path))
 
-    runner = Runner('admin', '11ae01e3bffee6c3e16f9034630950fbf1', projects)
+    runner = Runner('admin', '6336b50de5944aca821aa8131360886b', projects)
     runner.run_as_owner('project0', 'test_name0')
     runner.run_as_developer('project0', 'test_name0')
 
@@ -50,16 +50,17 @@ def test_runner_run(tmp_path, mocker):
         jenkins.Jenkins.__init__.assert_any_call(
             "http://localhost:8080",
             "admin",
-            "11ae01e3bffee6c3e16f9034630950fbf1")
-        jenkins.Jenkins.job_exists.assert_any_call("myProject/seed")
+            "6336b50de5944aca821aa8131360886b")
+        jenkins.Jenkins.job_exists.assert_any_call("myProject/test_name0")
         jenkins.Jenkins.job_exists.assert_any_call("myProject/dev")
         jenkins.Jenkins.job_exists.assert_any_call("myProject/dev/admin")
-        jenkins.Jenkins.job_exists.assert_any_call("myProject/dev/admin/seed")
+        jenkins.Jenkins.job_exists.assert_any_call(
+            "myProject/dev/admin/test_name0")
         jenkins.Jenkins.build_job.assert_any_call(
-            "myProject/seed",
+            "myProject/test_name0",
             parameters=dict())
         jenkins.Jenkins.build_job.assert_any_call(
-            "myProject/dev/admin/seed",
+            "myProject/dev/admin/test_name0",
             parameters=dict())
 
         # test with jobs that doesn't exist
