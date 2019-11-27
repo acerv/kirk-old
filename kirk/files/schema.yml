@@ -48,32 +48,27 @@ map:
           # p4 configuration
           perforce:
             required: false
-            seq:
-              - map:
-                  stream:
-                    required: true
-                    type: str
-                  branch:
-                    required: true
-                    type: str
-                  changelist:
-                    required: true
-                    type: str
+            map:
+              stream:
+                required: true
+                type: str
+              changelist:
+                required: true
+                type: str
+              workspace:
+                required: true
+                type: str
 
           # git configuration
           git:
             required: false
-            seq:
-              - map:
-                  url:
-                    required: true
-                    type: str
-                  branch:
-                    required: true
-                    type: str
-                  commit:
-                    required: true
-                    type: str
+            map:
+              url:
+                required: true
+                type: str
+              checkout:
+                required: true
+                type: str
 
       # default parameters which are shared along with all
       # jenkins jobs parameters and it can be overritten
@@ -114,6 +109,11 @@ map:
             required: true
             type: str
             pattern: (.+_)+
+
+          # pipeline script to be executed by this job
+          pipeline:
+            required: true
+            type: str
 
           # url of the jenkins server
           # i.e. "jenkins.mycompany.org:8080"

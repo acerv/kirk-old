@@ -83,6 +83,12 @@ class JobItem:
         # name of the job
         self._name = job_cfg['name']
 
+        # pipeline of the job
+        self._pipeline = job_cfg['pipeline']
+
+        # scm of the job
+        self._scm = defaults_cfg.get('scm', None)
+
         # read dependences
         self._dependences = list()
         if 'depends' in job_cfg:
@@ -151,6 +157,20 @@ class JobItem:
         List of job which this job depends to.
         """
         return self._dependences
+
+    @property
+    def pipeline(self):
+        """
+        Jenkins job script location.
+        """
+        return self._pipeline
+
+    @property
+    def scm(self):
+        """
+        Jenkins job scm configuration.
+        """
+        return self._scm
 
 
 class Project:

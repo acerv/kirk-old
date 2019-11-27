@@ -95,6 +95,7 @@ def test_project_base(tmp_path):
             server: myserver.com
         jobs:
             - name: Test_mytest
+              pipeline: pipeline.groovy
     """)
     proj = Project()
     proj.load(str(project_file.absolute()))
@@ -110,6 +111,7 @@ def test_project_base(tmp_path):
     assert len(jobs) == 1
     assert jobs[0].name == "Test_mytest"
     assert jobs[0].server == "myserver.com"
+    assert jobs[0].pipeline == "pipeline.groovy"
 
 
 def test_project_multiple_jobs(tmp_path):
@@ -128,8 +130,11 @@ def test_project_multiple_jobs(tmp_path):
             server: myserver.com
         jobs:
             - name: test_seed0
+              pipeline: pipeline.groovy
             - name: test_seed1
+              pipeline: pipeline.groovy
             - name: test_seed2
+              pipeline: pipeline.groovy
     """)
     proj = Project()
     proj.load(str(project_file.absolute()))
@@ -146,6 +151,7 @@ def test_project_multiple_jobs(tmp_path):
     for i in range(0, 3):
         assert jobs[i].server == "myserver.com"
         assert jobs[i].name == "test_seed%d" % i
+        assert jobs[i].pipeline == "pipeline.groovy"
         assert len(jobs[i].parameters) == 0
 
 
@@ -164,7 +170,9 @@ def test_project_jobs_conflict(tmp_path):
             server: myserver.com
         jobs:
             - name: test_seed0
+              pipeline: pipeline.groovy
             - name: test_seed0
+              pipeline: pipeline.groovy
     """)
     proj = Project()
     with pytest.raises(KirkError):
@@ -188,6 +196,7 @@ def test_project_server_override(tmp_path):
         jobs:
             - name: test_seed1
               server: myserver2.com
+              pipeline: pipeline.groovy
     """)
     proj = Project()
     proj.load(str(project_file.absolute()))
@@ -203,6 +212,7 @@ def test_project_server_override(tmp_path):
     assert len(jobs) == 1
     assert jobs[0].server == "myserver2.com"
     assert jobs[0].name == "test_seed1"
+    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 0
 
 
@@ -222,6 +232,7 @@ def test_project_param_value(tmp_path):
             server: myserver.com
         jobs:
             - name: test_name0
+              pipeline: pipeline.groovy
               parameters:
                 - name: JK_TEST_0
                   label: Test name 0
@@ -242,6 +253,7 @@ def test_project_param_value(tmp_path):
     assert len(jobs) == 1
     assert jobs[0].server == "myserver.com"
     assert jobs[0].name == "test_name0"
+    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 1
     assert jobs[0].parameters[0].name == "JK_TEST_0"
     assert jobs[0].parameters[0].label == "Test name 0"
@@ -269,6 +281,7 @@ def test_project_parameters(tmp_path):
             server: myserver.com
         jobs:
             - name: test_name0
+              pipeline: pipeline.groovy
               parameters:
                 - name: JK_TEST_0
                   label: Test name 0
@@ -326,6 +339,7 @@ def test_project_override_parameter(tmp_path):
                   show: false
         jobs:
             - name: test_name0
+              pipeline: pipeline.groovy
               parameters:
                 - name: JK_TEST_0
                   label: Test name 0
@@ -346,6 +360,7 @@ def test_project_override_parameter(tmp_path):
     assert len(jobs) == 1
     assert jobs[0].server == "myserver.com"
     assert jobs[0].name == "test_name0"
+    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 1
     assert jobs[0].parameters[0].name == "JK_TEST_0"
     assert jobs[0].parameters[0].label == "Test name 0"
@@ -374,6 +389,7 @@ def test_project_default_parameter(tmp_path):
                   show: false
         jobs:
             - name: test_name0
+              pipeline: pipeline.groovy
     """)
     proj = Project()
     proj.load(str(project_file.absolute()))
@@ -389,6 +405,7 @@ def test_project_default_parameter(tmp_path):
     assert len(jobs) == 1
     assert jobs[0].server == "myserver.com"
     assert jobs[0].name == "test_name0"
+    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 1
     assert jobs[0].parameters[0].name == "JK_TEST_0"
     assert jobs[0].parameters[0].label == "Test name 0"
@@ -412,10 +429,13 @@ def test_project_jobs_dependences(tmp_path):
             server: myserver.com
         jobs:
             - name: test_name0
+              pipeline: pipeline.groovy
             - name: test_name1
+              pipeline: pipeline.groovy
               depends:
                 - test_name0
             - name: test_name2
+              pipeline: pipeline.groovy
               depends:
                 - test_name0
                 - test_name1
@@ -434,9 +454,12 @@ def test_project_jobs_dependences(tmp_path):
     assert len(jobs) == 3
     assert jobs[0].server == "myserver.com"
     assert jobs[0].name == "test_name0"
+    assert jobs[0].pipeline == "pipeline.groovy"
     assert jobs[1].server == "myserver.com"
     assert jobs[1].name == "test_name1"
     assert jobs[1].dependences == ["test_name0"]
+    assert jobs[1].pipeline == "pipeline.groovy"
     assert jobs[2].server == "myserver.com"
     assert jobs[2].name == "test_name2"
     assert jobs[2].dependences == ["test_name0", "test_name1"]
+    assert jobs[2].pipeline == "pipeline.groovy"

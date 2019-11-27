@@ -5,7 +5,7 @@ import jenkins
 import kirk.loader
 from kirk.runner import Runner
 
-MOCKED = True
+MOCKED = False
 
 
 def test_runner_run(tmp_path, mocker):
@@ -22,8 +22,13 @@ def test_runner_run(tmp_path, mocker):
         location: myProject
         defaults:
             server: http://localhost:8080
+            scm:
+                git:
+                    url: https://github.com/acerv/marvin.git
+                    checkout: master
         jobs:
             - name: test_name0
+              pipeline: pipeline.groovy
     """)
     # pylint: disable=no-member
     if MOCKED:

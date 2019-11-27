@@ -5,6 +5,9 @@
    :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
+import os
+import re
+from datetime import date
 import logging
 import jenkins
 from kirk import KirkError
@@ -47,7 +50,7 @@ class Runner:
     def _setup_project_folder(self, location):
         """
         Setup a project folder creating directories and seed job.
-        Return the seed location.
+        Return the project location.
         """
         self._logger.info("setting up project folder '%s'", location)
 
@@ -64,17 +67,48 @@ class Runner:
                 self._logger.info("create '%s'", base)
                 self._server.create_job(base, jenkins.EMPTY_FOLDER_XML)
 
+        return location
+
     def _create_seed(self, location, job):
         """
         Create the job seed location.
         """
-        # create the seed
-        seed_xml = '''<?xml version='1.0' encoding='UTF-8'?>
-        <project>
-            <actions/>
-            <description>Created by kirk</description>
-            <scm class="hudson.scm.NullSCM"/>
-        </project>'''
+        # load the xml configuration according with scm
+        seed_file = None
+
+        params = dict()
+        params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
+        params["KIRK_SCRIPT_PATH"] = job.pipeline
+
+        currdir = os.path.abspath(os.path.dirname(__file__))
+        if job.scm:
+            if "perforce" in job.scm:
+                seed_file = os.path.join(currdir, "files", "job_perforce.xml")
+                params["KIRK_P4_CREDENTIAL"] = ""
+                params["KIRK_P4_CL"] = job.scm["perforce"]["changelist"]
+                params["KIRK_P4_WORKSPACE"] = job.scm["perforce"]["workspace"]
+                params["KIRK_P4_STREAM"] = job.scm["perforce"]["stream"]
+            elif "git" in job.scm:
+                seed_file = os.path.join(currdir, "files", "job_git.xml")
+                params["KIRK_GIT_CREDENTIAL"] = ""
+                params["KIRK_GIT_URL"] = job.scm["git"]["url"]
+                params["KIRK_GIT_CHECKOUT"] = job.scm["git"]["checkout"]
+            else:
+                raise NotImplementedError(
+                    "'%s' scm is not supported" % job.scm)
+        else:
+            seed_file = os.path.join(currdir, "files", "job_noscm.xml")
+
+        seed_xml = None
+        with open(seed_file, 'r') as seed:
+            seed_xml = seed.read()
+
+        # update xml according with scm configuration
+        pattern = re.compile(r'(?P<variable>KIRK_.+?(?=<))')
+        seed_xml = re.sub(
+            pattern, lambda m: params[m.group('variable')], seed_xml)
+
+        # create job seed
         seed_location = "/".join([location, job.name])
 
         if not self._server.job_exists(seed_location):
@@ -89,6 +123,7 @@ class Runner:
     def _setup_developer_folder(self, location):
         """
         Setup the developer folders inside given location.
+        Return the project location.
         """
         dev_location = "/".join([location, "dev", self._user])
         self._setup_project_folder(dev_location)
@@ -135,8 +170,7 @@ class Runner:
             if mode == "developer":
                 proj_folder = self._setup_developer_folder(proj.location)
             else:
-                self._setup_project_folder(proj.location)
-                proj_folder = proj.location
+                proj_folder = self._setup_project_folder(proj.location)
 
             # create seed
             seed_location = self._create_seed(proj_folder, job_to_run)
