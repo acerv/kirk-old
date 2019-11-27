@@ -5,7 +5,7 @@ import jenkins
 import kirk.loader
 from kirk.runner import Runner
 
-MOCKED = False
+MOCKED = True
 
 
 def test_runner_run(tmp_path, mocker):
