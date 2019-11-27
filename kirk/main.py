@@ -19,11 +19,11 @@ _debug = False
 
 
 @click.group()
-@click.option('--config', default="kirk.ini", help="configuration file")
+@click.option('--config', type=click.File('r'), default="kirk.ini", help="configuration file")
 @click.option('--projects', default="projects", help="projects folder")
 @click.option('--user', default="admin", help="Jenkins username")
 @click.option('--password', default="admin", help="Jenkins password")
-@click.option('--debug/--no-debug', default=False, help="debug mode")
+@click.option('--debug', is_flag=True, default=False, help="debug mode")
 def client(config, projects, user, password, debug):
     """
     Kirk - Jenkins remote tester
@@ -41,8 +41,8 @@ def client(config, projects, user, password, debug):
     _debug = debug
 
     click.echo()
-    click.echo("Started session")
-    click.echo("- config:\t%s" % config)
+    click.echo("Session started:")
+    click.echo("- config:\t%s" % config.name)
     click.echo("- projects:\t%s" % projects)
     click.echo("- debug:\t%s" % debug)
     click.echo("- user:\t\t%s" % _user)
