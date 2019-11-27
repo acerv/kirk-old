@@ -5,6 +5,8 @@
    :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
+import os
+import configparser
 import click
 import kirk.loader
 from kirk.runner import Runner
@@ -13,39 +15,52 @@ from kirk.runner import Runner
 # command arguments
 _config = "kirk.ini"
 _projects = None
-_user = "admin"
+_username = "admin"
 _password = "admin"
 _debug = False
 
 
 @click.group()
-@click.option('--config', type=click.File('r'), default="kirk.ini", help="configuration file")
+@click.option('--config', default="kirk.ini", help="configuration file")
 @click.option('--projects', default="projects", help="projects folder")
-@click.option('--user', default="admin", help="Jenkins username")
+@click.option('--username', default="admin", help="Jenkins username")
 @click.option('--password', default="admin", help="Jenkins password")
 @click.option('--debug', is_flag=True, default=False, help="debug mode")
-def client(config, projects, user, password, debug):
+def client(config, projects, username, password, debug):
     """
     Kirk - Jenkins remote tester
     """
     global _config
     global _projects
-    global _user
+    global _username
     global _password
     global _debug
 
     _config = config
     _projects = projects
-    _user = user
-    _password = password
     _debug = debug
+
+    inifile = None
+
+    if os.path.isfile(config):
+        inifile = configparser.ConfigParser()
+        inifile.read(config)
+
+        _username = inifile['kirk']['username']
+        _password = inifile['kirk']['password']
+
+    if username != "admin":
+        _username = username
+
+    if password != "admin":
+        _password = password
 
     click.echo()
     click.echo("Session started:")
-    click.echo("- config:\t%s" % config.name)
+    click.echo("- config:\t%s" % config)
     click.echo("- projects:\t%s" % projects)
     click.echo("- debug:\t%s" % debug)
-    click.echo("- user:\t\t%s" % _user)
+    click.echo("- username:\t%s" % _username)
     click.echo()
 
     _projects = kirk.loader.load(projects)
@@ -95,7 +110,7 @@ def run(testregexp, owner):
         click.echo("Running tests as developer:")
 
     try:
-        runner = Runner(_user, _password, _projects)
+        runner = Runner(_username, _password, _projects)
         for test in testregexp:
             click.echo("-> running %s: " % test, nl=False)
             project, job = test.split("::")
@@ -107,4 +122,4 @@ def run(testregexp, owner):
 
             click.echo("%s" % job_location)
     except Exception as err:
-        click.echo(err)
+        click.echo(err, err=True)
