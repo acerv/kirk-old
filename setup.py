@@ -30,7 +30,8 @@ setup(
     install_requires=[
         'python-jenkins',
         'pyyaml',
-        'pykwalify'
+        'pykwalify',
+        'click',
     ],
     tests_require=[
         'pytest',
@@ -39,8 +40,7 @@ setup(
     test_suite="tests",
     entry_points={
         'console_scripts': [
-            'kirk=kirk.main:_cmd',
-            'kirk-ui=kirk.main:_open_ui',
+            'kirk=kirk.main:client',
         ],
     },
 )

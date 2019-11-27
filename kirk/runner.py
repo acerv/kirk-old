@@ -184,6 +184,9 @@ class Runner:
         finally:
             del self._server
 
+        url = job.server + "/" + seed_location
+        return url
+
     def run_as_developer(self, proj_name, job_name):
         """
         Run a job as developer of the project.
@@ -191,8 +194,9 @@ class Runner:
         :type proj_name: str
         :param job_name: job name
         :type job_name: str
+        :return: jenkins job location
         """
-        self._run(proj_name, job_name, mode="developer")
+        return self._run(proj_name, job_name, mode="developer")
 
     def run_as_owner(self, proj_name, job_name):
         """
@@ -201,5 +205,6 @@ class Runner:
         :type proj_name: str
         :param job_name: job name
         :type job_name: str
+        :return: jenkins job location
         """
-        self._run(proj_name, job_name, mode="owner")
+        return self._run(proj_name, job_name, mode="owner")

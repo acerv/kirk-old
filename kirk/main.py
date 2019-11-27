@@ -5,92 +5,106 @@
    :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
-import argparse
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser  # ver. < 3.0
-
+import click
 import kirk.loader
 from kirk.runner import Runner
 
 
-def _cmd():
+# command arguments
+_config = "kirk.ini"
+_projects = None
+_user = "admin"
+_password = "admin"
+_debug = False
+
+
+@click.group()
+@click.option('--config', default="kirk.ini", help="configuration file")
+@click.option('--projects', default="projects", help="projects folder")
+@click.option('--user', default="admin", help="Jenkins username")
+@click.option('--password', default="admin", help="Jenkins password")
+@click.option('--debug/--no-debug', default=False, help="debug mode")
+def client(config, projects, user, password, debug):
     """
-    Entry point for setuptools.
+    Kirk - Jenkins remote tester
     """
-    # pylint: disable=invalid-name
-    _parser = argparse.ArgumentParser(
-        description="Kirk - Jenkins remote tester")
-    _parser.add_argument(
-        "-c",
-        "--config",
-        default="kirk.ini",
-        help="configuration file")
-    _parser.add_argument(
-        "-p",
-        "--projects",
-        default="projects",
-        help="projects folder")
-    _parser.add_argument(
-        "-u",
-        "--user",
-        default="admin",
-        help="override jenkins username inside configuration")
-    _parser.add_argument(
-        "-t",
-        "--token",
-        default="",
-        help="override jenkins user token inside configuration")
-    _parser.add_argument(
-        "-s",
-        "--search",
-        help="search for tests inside project files using regexp")
-    _parser.add_argument(
-        "-l",
-        "--list",
-        action='store_true',
-        help="show all projects")
-    _parser.add_argument(
-        "-r",
-        "--run",
-        nargs='*',
-        help="list of tests to run")
+    global _config
+    global _projects
+    global _user
+    global _password
+    global _debug
 
-    _arguments = _parser.parse_args()
+    _config = config
+    _projects = projects
+    _user = user
+    _password = password
+    _debug = debug
 
-    # load projects
-    print("Loading projects files...")
-    projects = kirk.loader.load(_arguments.projects)
+    click.echo()
+    click.echo("Started session")
+    click.echo("- config:\t%s" % config)
+    click.echo("- projects:\t%s" % projects)
+    click.echo("- debug:\t%s" % debug)
+    click.echo("- user:\t\t%s" % _user)
+    click.echo()
 
-    # if search is defined, search test inside the projects list
-    if _arguments.search:
-        found = kirk.loader.search(_arguments.search, projects)
+    _projects = kirk.loader.load(projects)
+
+
+@client.command()
+def list():
+    """
+    list tests inside projects folder
+    """
+    click.echo("Available tests:")
+    for proj in _projects:
+        for job in proj.jobs:
+            click.echo("\t%s::%s" % (proj.name, job.name))
+
+
+@client.command()
+@click.argument("testregexp", nargs=1)
+def search(testregexp):
+    """
+    search for tests inside project files using regexp
+    """
+    found = kirk.loader.search(testregexp, _projects)
+    if not found:
+        click.echo("Tests not found!")
+    else:
+        click.echo("Found tests:")
         for proj, job in found:
-            print("%s::%s" % (proj, job))
-    elif _arguments.list:
-        for proj in projects:
-            for job in proj.jobs:
-                print("%s::%s" % (proj.name, job.name))
-    elif _arguments.run:
-        runner = Runner(_arguments.user, _arguments.token, projects)
-        print("Selected tests:")
-        for test in _arguments.run:
-            print(" - " + test)
-        print("\n")
-
-        try:
-            for test in _arguments.run:
-                print("Running test %s..." % test)
-                project, job = test.split("::")
-                runner.run_as_developer(project, job)
-                print("done!")
-        except Exception as err:
-            print(err)
+            click.echo("\t%s::%s" % (proj, job))
 
 
-def _open_ui():
+@client.command()
+@click.option("--owner", is_flag=True, default=False, help="run as owner")
+@click.argument("testregexp", nargs=-1)
+def run(testregexp, owner):
     """
-    Entry point for main form.
+    run a list of tests in the format <project>::<test>
     """
-    raise NotImplementedError("Not implemented yet")
+    click.echo("Selected tests:")
+    for test in testregexp:
+        click.echo("  " + test)
+    click.echo("")
+
+    if owner:
+        click.echo("Running tests as owner:")
+    else:
+        click.echo("Running tests as developer:")
+
+    try:
+        runner = Runner(_user, _password, _projects)
+        for test in testregexp:
+            click.echo("-> running %s: " % test, nl=False)
+            project, job = test.split("::")
+
+            if owner:
+                job_location = runner.run_as_owner(project, job)
+            else:
+                job_location = runner.run_as_developer(project, job)
+
+            click.echo("%s" % job_location)
+    except Exception as err:
+        click.echo(err)
