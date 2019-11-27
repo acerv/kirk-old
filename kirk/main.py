@@ -83,7 +83,7 @@ def _cmd():
             for test in _arguments.run:
                 print("Running test %s..." % test)
                 project, job = test.split("::")
-                runner.run(project, job)
+                runner.run_as_developer(project, job)
                 print("done!")
         except Exception as err:
             print(err)
