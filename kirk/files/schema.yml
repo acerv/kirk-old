@@ -87,7 +87,7 @@ map:
               name:
                 required: true
                 type: str
-                pattern: [.+_]*
+                pattern: (.+_)+
 
               # label used in the UI
               label:
