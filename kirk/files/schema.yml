@@ -113,6 +113,7 @@ map:
           name:
             required: true
             type: str
+            pattern: (.+_)+
 
           # url of the jenkins server
           # i.e. "jenkins.mycompany.org:8080"
