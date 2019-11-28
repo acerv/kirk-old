@@ -32,6 +32,7 @@ setup(
         'pyyaml',
         'pykwalify',
         'click',
+        'keyrings.alt',
     ],
     tests_require=[
         'pytest',

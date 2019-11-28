@@ -5,9 +5,9 @@
    :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
-from keyrings.cryptfile.cryptfile import CryptFileKeyring
+from keyrings.alt.file import PlaintextKeyring
 
-inkr = CryptFileKeyring()
+inkr = PlaintextKeyring()
 
 
 def get_password(file_path, section, username):

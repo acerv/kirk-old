@@ -6,7 +6,6 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
-import configparser
 import click
 import kirk.loader
 import kirk.credentials
@@ -218,8 +217,19 @@ def credential(args, credential):
     """
     Add a credential inside credentials file.
     """
+    url = credential[0]
+    user = credential[1]
+    password = credential[2]
+
+    click.secho("saving credential:", fg="white", bold=True)
+    click.echo("    url:  %s" % url)
+    click.echo("    user: %s" % user)
+    click.echo()
+
     kirk.credentials.set_password(
         args.credentials,
         credential[0],
         credential[1],
         credential[2])
+
+    click.secho("credential saved", fg="green")
