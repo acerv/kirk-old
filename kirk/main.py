@@ -28,9 +28,9 @@ pass_arguments = click.make_pass_decorator(Arguments, ensure=True)
 
 
 @click.group()
-@click.option('--credentials', default="credentials.cfg", help="credentials file")
-@click.option('--projects', default="projects", help="projects folder")
-@click.option('--debug', is_flag=True, default=False, help="debug mode")
+@click.option('-c', '--credentials', default="credentials.cfg", help="credentials file")
+@click.option('-p', '--projects', default="projects", help="projects folder")
+@click.option('-d', '--debug', is_flag=True, default=False, help="debug mode")
 @pass_arguments
 def client(args, credentials, projects, debug):
     """
@@ -182,15 +182,19 @@ def search(args, testregexp):
 
 @client.command()
 @pass_arguments
-@click.option('--user', default=None, help="Jenkins username")
+@click.option('-u', '--user', default=None, help="Jenkins username")
 @click.argument("tests", nargs=-1)
 def run(args, tests, user):
     """
     run a list of tests
 
-    Usage:
+    Usage, to run as owner:
 
-        kirk run <myproject>::<mytest0> <myproject>::<mytest1> ...
+        kirk run <myproject>::<mytest> ...
+
+    Usage, to run as user:
+
+        kirk run -u <myuser> <myproject>::<mytest> ...
 
     """
     projects, all_tests = get_available_tests(args)
