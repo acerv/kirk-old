@@ -40,6 +40,7 @@ def client(args, config, projects, username, password, debug):
     """
     Kirk - Jenkins remote tester
     """
+    # initialize configurations
     args.config = config
     args.projects = projects
     args.username = username
@@ -61,6 +62,7 @@ def client(args, config, projects, username, password, debug):
     if password != "admin":
         args.password = password
 
+    # start session
     if debug:
         click.secho("debugging session\n", fg="green", bold=True)
 
@@ -107,17 +109,61 @@ def get_available_tests(args):
 
 @client.command()
 @pass_arguments
+@click.argument("projects", nargs=-1)
+def info(args, projects):
+    """
+    show projects informations
+    """
+    available_projects, _ = get_available_tests(args)
+    if not available_projects:
+        return
+
+    all_projects = [proj.name for proj in available_projects]
+    not_available = list()
+    for proj_in in projects:
+        if proj_in not in all_projects:
+            not_available.extend(proj_in)
+
+    if not_available:
+        click.secho("ERROR: following projects are not available", fg="red")
+        for project in not_available:
+            click.echo("    %s" % project)
+        return
+
+    for project in projects:
+        for proj in available_projects:
+            if project == proj.name:
+                click.secho(proj.name, fg="white", bold=True)
+                click.echo("    description: %s" % proj.description)
+                click.echo("    author: %s" % proj.author)
+                click.echo("    year: %s" % proj.year)
+                click.echo("    version: %s" % proj.version)
+                click.echo("    location: %s" % proj.location)
+                click.echo("    jobs:")
+
+                for job in proj.jobs:
+                    click.echo("        %s" % job.name)
+                break
+
+
+@client.command()
+@pass_arguments
 def show(args):
     """
-    list tests inside projects folder
+    list projects and tests inside projects folder
     """
     projects, tests = get_available_tests(args)
     if not projects or not tests:
         return
 
+    click.secho("available projects", fg="white", bold=True)
+    for project in projects:
+        click.echo("    %s" % project.name)
+    click.echo()
+
     click.secho("available tests", fg="white", bold=True)
     for test in tests:
-        click.secho("    %s" % test)
+        click.echo("    %s" % test)
 
 
 @client.command()
