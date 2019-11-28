@@ -10,6 +10,7 @@ import re
 from datetime import date
 import logging
 import jenkins
+import kirk.credentials
 from kirk import KirkError
 
 
@@ -18,44 +19,48 @@ class Runner:
     Runner class for projects files.
     """
 
-    def __init__(self, user, token, projects):
+    RUNNER_USER = "kirk"
+
+    def __init__(self, credentials, projects):
         """
-        :param user: username to login in jenkins
-        :type user: str
-        :param token: token of the username in jenkins
-        :type token: str
+        :param credentials: file where credentials are stored
+        :type credentials: str
         :param projects: list of the projects to load
         :type projects: list(Project)
         """
-        if not user:
-            raise ValueError('user')
-
-        if not token:
-            raise ValueError('token')
-
         self._logger = logging.getLogger("runner")
-        self._projects = projects
-        self._user = user
-        self._token = token
         self._server = None
+        self._credentials = credentials
+        self._projects = projects
 
     def _open_connection(self, job):
         """
         Open a connection with Jenkins server.
         """
+        self._logger.info("getting kirk credentials")
+        password = kirk.credentials.get_password(
+            self._credentials,
+            job.server,
+            self.RUNNER_USER
+        )
+
         self._logger.info("connecting to '%s'", job.server)
-        server = jenkins.Jenkins(job.server, self._user, self._token)
+        server = jenkins.Jenkins(job.server, self.RUNNER_USER, password)
         return server
 
-    def _setup_project_folder(self, location):
+    def _setup_project_folder(self, location, user=None):
         """
         Setup a project folder creating directories and seed job.
         Return the project location.
         """
-        self._logger.info("setting up project folder '%s'", location)
+        dev_location = location
+        if user:
+            dev_location = "/".join([location, "dev", user])
+
+        self._logger.info("setting up project folder '%s'", dev_location)
 
         # create the project folder
-        folders = location.split("/")
+        folders = dev_location.split("/")
         base = ""
 
         for folder in folders:
@@ -67,7 +72,7 @@ class Runner:
                 self._logger.info("create '%s'", base)
                 self._server.create_job(base, jenkins.EMPTY_FOLDER_XML)
 
-        return location
+        return dev_location
 
     def _create_seed(self, location, job):
         """
@@ -120,18 +125,16 @@ class Runner:
 
         return seed_location
 
-    def _setup_developer_folder(self, location):
-        """
-        Setup the developer folders inside given location.
-        Return the project location.
-        """
-        dev_location = "/".join([location, "dev", self._user])
-        self._setup_project_folder(dev_location)
-        return dev_location
-
-    def _run(self, proj_name, job_name, mode="developer"):
+    def run(self, proj_name, job_name, user=None):
         """
         Run a job for the given project.
+        :param proj_name: project name
+        :type proj_name: str
+        :param job_name: job name
+        :type job_name: str
+        :param user: developer name
+        :type user: str
+        :return: jenkins job location
         """
         if not proj_name:
             raise ValueError("proj_name")
@@ -166,11 +169,8 @@ class Runner:
         try:
             proj_folder = None
 
-            # create folders as developer if needed
-            if mode == "developer":
-                proj_folder = self._setup_developer_folder(proj.location)
-            else:
-                proj_folder = self._setup_project_folder(proj.location)
+            # create project folder
+            proj_folder = self._setup_project_folder(proj.location, user)
 
             # create seed
             seed_location = self._create_seed(proj_folder, job_to_run)
@@ -186,25 +186,3 @@ class Runner:
 
         url = job.server + "/" + seed_location
         return url
-
-    def run_as_developer(self, proj_name, job_name):
-        """
-        Run a job as developer of the project.
-        :param proj_name: project name
-        :type proj_name: str
-        :param job_name: job name
-        :type job_name: str
-        :return: jenkins job location
-        """
-        return self._run(proj_name, job_name, mode="developer")
-
-    def run_as_owner(self, proj_name, job_name):
-        """
-        Run a job as the owner of the project.
-        :param proj_name: project name
-        :type proj_name: str
-        :param job_name: job name
-        :type job_name: str
-        :return: jenkins job location
-        """
-        return self._run(proj_name, job_name, mode="owner")
