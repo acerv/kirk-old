@@ -92,6 +92,11 @@ def get_available_tests(args):
 def info(args, projects):
     """
     show projects informations
+
+    Usage:
+
+        kirk info <projectname>
+
     """
     available_projects, _ = get_available_tests(args)
     if not available_projects:
@@ -130,6 +135,11 @@ def info(args, projects):
 def show(args):
     """
     list projects and tests inside projects folder
+
+    Usage:
+
+        kirk list
+
     """
     projects, tests = get_available_tests(args)
     if not projects or not tests:
@@ -151,6 +161,11 @@ def show(args):
 def search(args, testregexp):
     """
     search for tests inside project files using regexp
+
+    Usage:
+
+        kirk search .*test_lint.*
+
     """
     projects, tests = get_available_tests(args)
     if not projects or not tests:
@@ -171,7 +186,12 @@ def search(args, testregexp):
 @click.argument("tests", nargs=-1)
 def run(args, tests, user):
     """
-    run a list of tests in the format <project>::<test>
+    run a list of tests
+
+    Usage:
+
+        kirk run <myproject>::<mytest0> <myproject>::<mytest1> ...
+
     """
     projects, all_tests = get_available_tests(args)
     if not projects or not all_tests:
@@ -212,24 +232,26 @@ def run(args, tests, user):
 
 @client.command()
 @pass_arguments
-@click.argument("credential", nargs=3)
+@click.argument("credential", nargs=2)
 def credential(args, credential):
     """
-    Add a credential inside credentials file.
+    add a new user inside credentials file
+
+    Usage:
+
+        kirk credential <myurl> <myuser>
+
     """
     url = credential[0]
     user = credential[1]
-    password = credential[2]
 
     click.secho("saving credential:", fg="white", bold=True)
     click.echo("    url:  %s" % url)
     click.echo("    user: %s" % user)
+
+    password = click.prompt("    type your password", hide_input=True)
+
+    kirk.credentials.set_password(args.credentials, url, user, password)
+
     click.echo()
-
-    kirk.credentials.set_password(
-        args.credentials,
-        credential[0],
-        credential[1],
-        credential[2])
-
     click.secho("credential saved", fg="green")
