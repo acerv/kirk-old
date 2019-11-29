@@ -139,13 +139,6 @@ def test_project_multiple_jobs(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
     jobs = proj.jobs
     assert len(jobs) == 3
     for i in range(0, 3):
@@ -201,19 +194,7 @@ def test_project_server_override(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
-    jobs = proj.jobs
-    assert len(jobs) == 1
-    assert jobs[0].server == "myserver2.com"
-    assert jobs[0].name == "test_seed1"
-    assert jobs[0].pipeline == "pipeline.groovy"
-    assert len(jobs[0].parameters) == 0
+    assert proj.jobs[0].server == "myserver2.com"
 
 
 def test_project_param_value(tmp_path):
@@ -242,27 +223,13 @@ def test_project_param_value(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
     jobs = proj.jobs
-    assert len(jobs) == 1
-    assert jobs[0].server == "myserver.com"
-    assert jobs[0].name == "test_name0"
-    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 1
     assert jobs[0].parameters[0].name == "JK_TEST_0"
     assert jobs[0].parameters[0].label == "Test name 0"
     assert jobs[0].parameters[0].default == "test_something_0"
     assert jobs[0].parameters[0].show == False
     assert jobs[0].parameters[0].value == "test_something_0"
-
-    jobs[0].parameters[0].value = "test_something_else"
-    assert jobs[0].parameters[0].value == "test_something_else"
 
 
 def test_project_parameters(tmp_path):
@@ -299,17 +266,7 @@ def test_project_parameters(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
     jobs = proj.jobs
-    assert len(jobs) == 1
-    assert jobs[0].server == "myserver.com"
-    assert jobs[0].name == "test_name0"
     assert len(jobs[0].parameters) == 3
     for i in range(0, 3):
         assert jobs[0].parameters[i].name == "JK_TEST_%d" % i
@@ -349,18 +306,7 @@ def test_project_override_parameter(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
     jobs = proj.jobs
-    assert len(jobs) == 1
-    assert jobs[0].server == "myserver.com"
-    assert jobs[0].name == "test_name0"
-    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 1
     assert jobs[0].parameters[0].name == "JK_TEST_0"
     assert jobs[0].parameters[0].label == "Test name 0"
@@ -394,18 +340,7 @@ def test_project_default_parameter(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
     jobs = proj.jobs
-    assert len(jobs) == 1
-    assert jobs[0].server == "myserver.com"
-    assert jobs[0].name == "test_name0"
-    assert jobs[0].pipeline == "pipeline.groovy"
     assert len(jobs[0].parameters) == 1
     assert jobs[0].parameters[0].name == "JK_TEST_0"
     assert jobs[0].parameters[0].label == "Test name 0"
@@ -443,23 +378,72 @@ def test_project_jobs_dependences(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.name == "project"
-    assert proj.description == "my project"
-    assert proj.author == "pippo"
-    assert proj.year == 3010
-    assert proj.version == 1.0
-    assert proj.location == "myProject"
-
     jobs = proj.jobs
     assert len(jobs) == 3
-    assert jobs[0].server == "myserver.com"
-    assert jobs[0].name == "test_name0"
-    assert jobs[0].pipeline == "pipeline.groovy"
-    assert jobs[1].server == "myserver.com"
-    assert jobs[1].name == "test_name1"
+    assert jobs[0].dependences == []
     assert jobs[1].dependences == ["test_name0"]
-    assert jobs[1].pipeline == "pipeline.groovy"
-    assert jobs[2].server == "myserver.com"
-    assert jobs[2].name == "test_name2"
     assert jobs[2].dependences == ["test_name0", "test_name1"]
-    assert jobs[2].pipeline == "pipeline.groovy"
+
+
+def test_project_scm_git(tmp_path):
+    """
+    Test project file defining git scm
+    """
+    project_file = tmp_path / "project.yml"
+    project_file.write_text("""
+        name: project
+        description: my project
+        author: pippo
+        year: 3010
+        version: 1.0
+        location: myProject
+        defaults:
+            server: myserver.com
+            scm:
+                git:
+                    url: myurl.com/repo.git
+                    checkout: development
+                    credential: fbf1e43a-3442-455e-9c7f-31421a122370
+        jobs:
+            - name: test_seed1
+              pipeline: pipeline.groovy
+    """)
+    proj = Project()
+    proj.load(str(project_file.absolute()))
+
+    assert proj.jobs[0].scm["git"]["url"] == "myurl.com/repo.git"
+    assert proj.jobs[0].scm["git"]["checkout"] == "development"
+    assert proj.jobs[0].scm["git"]["credential"] == "fbf1e43a-3442-455e-9c7f-31421a122370"
+
+
+def test_project_scm_p4(tmp_path):
+    """
+    Test project file defining perforce scm
+    """
+    project_file = tmp_path / "project.yml"
+    project_file.write_text("""
+        name: project
+        description: my project
+        author: pippo
+        year: 3010
+        version: 1.0
+        location: myProject
+        defaults:
+            server: myserver.com
+            scm:
+                perforce:
+                    stream: //depot/main/...
+                    changelist: 1001
+                    workspace: depot_main_workspace
+                    credential: fbf1e43a-3442-455e-9c7f-31421a122370
+        jobs:
+            - name: test_seed1
+              pipeline: pipeline.groovy
+    """)
+    proj = Project()
+    proj.load(str(project_file.absolute()))
+
+    assert proj.jobs[0].scm["perforce"]["stream"] == "//depot/main/..."
+    assert proj.jobs[0].scm["perforce"]["changelist"] == 1001
+    assert proj.jobs[0].scm["perforce"]["workspace"] == "depot_main_workspace"
+    assert proj.jobs[0].scm["perforce"]["credential"] == "fbf1e43a-3442-455e-9c7f-31421a122370"

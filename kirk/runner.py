@@ -89,13 +89,14 @@ class Runner:
         if job.scm:
             if "perforce" in job.scm:
                 seed_file = os.path.join(currdir, "files", "job_perforce.xml")
-                params["KIRK_P4_CREDENTIAL"] = ""
-                params["KIRK_P4_CL"] = job.scm["perforce"]["changelist"]
+                params["KIRK_P4_CREDENTIAL"] = job.scm["perforce"]["credential"]
+                params["KIRK_P4_CL"] = str(job.scm["perforce"]["changelist"])
                 params["KIRK_P4_WORKSPACE"] = job.scm["perforce"]["workspace"]
                 params["KIRK_P4_STREAM"] = job.scm["perforce"]["stream"]
             elif "git" in job.scm:
                 seed_file = os.path.join(currdir, "files", "job_git.xml")
-                params["KIRK_GIT_CREDENTIAL"] = ""
+                params["KIRK_GIT_CREDENTIAL"] = job.scm["git"].get(
+                    "credential", "")
                 params["KIRK_GIT_URL"] = job.scm["git"]["url"]
                 params["KIRK_GIT_CHECKOUT"] = job.scm["git"]["checkout"]
             else:

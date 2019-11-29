@@ -3,6 +3,7 @@ runner module tests.
 """
 import jenkins
 import kirk.loader
+import kirk.credentials
 from kirk.runner import Runner
 
 MOCKED = True
@@ -43,9 +44,17 @@ def test_runner_run(tmp_path, mocker):
 
     projects = kirk.loader.load(str(tmp_path))
 
-    runner = Runner('admin', '6336b50de5944aca821aa8131360886b', projects)
-    runner.run_as_owner('project0', 'test_name0')
-    runner.run_as_developer('project0', 'test_name0')
+    # create credentials file
+    credentials = tmp_path / "credentials.cfg"
+    kirk.credentials.set_password(
+        credentials,
+        "http://localhost:8080",
+        "kirk",
+        "6336b50de5944aca821aa8131360886b")
+
+    runner = Runner(credentials, projects)
+    runner.run('project0', 'test_name0')
+    runner.run('project0', 'test_name0', user="admin")
 
     if MOCKED:
         # check if jobs are reconfigured
@@ -54,7 +63,7 @@ def test_runner_run(tmp_path, mocker):
 
         jenkins.Jenkins.__init__.assert_any_call(
             "http://localhost:8080",
-            "admin",
+            "kirk",
             "6336b50de5944aca821aa8131360886b")
         jenkins.Jenkins.job_exists.assert_any_call("myProject/test_name0")
         jenkins.Jenkins.job_exists.assert_any_call("myProject/dev")
@@ -71,8 +80,8 @@ def test_runner_run(tmp_path, mocker):
         # test with jobs that doesn't exist
         mocker.patch('jenkins.Jenkins.job_exists', return_value=False)
 
-    runner.run_as_owner('project0', 'test_name0')
-    runner.run_as_developer('project0', 'test_name0')
+    runner.run('project0', 'test_name0')
+    runner.run('project0', 'test_name0', user="admin")
 
     if MOCKED:
         jenkins.Jenkins.create_job.assert_called()
