@@ -5,23 +5,31 @@ import os
 import pytest
 import kirk.credentials
 
-CREDENTIALS = "credentials.cfg"
 
-
-@pytest.fixture(autouse=True)
-def remove_file():
-    if os.path.isfile(CREDENTIALS):
-        os.remove(CREDENTIALS)
-
-
-def test_get_set_password():
+class TestCredentials:
     """
-    Test set_password and get_password methods
+    Test credentials module
     """
-    kirk.credentials.set_password(
-        CREDENTIALS, "jenkins.xyz.org", "kirk", "12345")
-    assert os.path.isfile(CREDENTIALS)
 
-    password = kirk.credentials.get_password(
-        CREDENTIALS, "jenkins.xyz.org", "kirk")
-    assert password == "12345"
+    credentials = ""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        self.credentials = tmp_path / "credentials.cfg"
+
+    @pytest.fixture(autouse=True)
+    def teardown(self, tmp_path):
+        if os.path.isfile(self.credentials):
+            os.remove(self.credentials)
+
+    def test_password_storage(self):
+        """
+        Save and read a password and check if it matches.
+        """
+        kirk.credentials.set_password(
+            self.credentials, "jenkins.xyz.org", "kirk", "12345")
+        assert os.path.isfile(self.credentials)
+
+        password = kirk.credentials.get_password(
+            self.credentials, "jenkins.xyz.org", "kirk")
+        assert password == "12345"
