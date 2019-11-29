@@ -54,8 +54,11 @@ map:
                 type: str
               changelist:
                 required: true
-                type: str
+                type: int
               workspace:
+                required: true
+                type: str
+              credential:
                 required: true
                 type: str
 
@@ -68,6 +71,9 @@ map:
                 type: str
               checkout:
                 required: true
+                type: str
+              credential:
+                required: false
                 type: str
 
       # default parameters which are shared along with all
