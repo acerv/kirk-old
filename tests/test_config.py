@@ -1,7 +1,7 @@
 """
 config module tests.
 """
-
+import os
 import pytest
 from kirk import KirkError
 from kirk.config import Project
@@ -447,3 +447,42 @@ def test_project_scm_p4(tmp_path):
     assert proj.jobs[0].scm["perforce"]["changelist"] == 1001
     assert proj.jobs[0].scm["perforce"]["workspace"] == "depot_main_workspace"
     assert proj.jobs[0].scm["perforce"]["credential"] == "fbf1e43a-3442-455e-9c7f-31421a122370"
+
+
+def test_project_env_var(tmp_path):
+    """
+    Test project file with environment variables
+    """
+    project_file = tmp_path / "project.yml"
+    project_file.write_text("""
+        name: project
+        description: my project
+        author: pippo
+        year: 3010
+        version: 1.0
+        location: !ENV ${LOCATION}
+        defaults:
+            server: myserver.com
+            scm:
+                perforce:
+                    stream: //depot/main/...
+                    changelist: 1001
+                    workspace: depot_main_${NODE}_${JOBNAME}
+                    credential: fbf1e43a-3442-455e-9c7f-31421a122370
+        jobs:
+            - name: test_seed0
+              pipeline: pipeline.groovy
+    """)
+    os.environ["LOCATION"] = "myLocation"
+
+    proj = None
+    try:
+        proj = Project()
+        proj.load(str(project_file.absolute()))
+
+        assert proj.location == "myLocation"
+    finally:
+        del os.environ["LOCATION"]
+
+    # ensure !ENV is needed in order to read environmental variables
+    assert proj.jobs[0].scm["perforce"]["workspace"] == "depot_main_${NODE}_${JOBNAME}"
