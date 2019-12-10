@@ -12,7 +12,7 @@ class Tokenizer:
     A generic string tokenizer.
     """
 
-    def encode(self, project, job, params):
+    def encode(self, project, job, params, show_params=True):
         """
         Encode project name, job name and job parameters into a unique
         string identifier.
@@ -22,6 +22,8 @@ class Tokenizer:
         :type job: str
         :param params: list of parameters with value
         :type params: dict
+        :param show_params: if False, parameters will be hided
+        :type show_params: bool
         :return: str
         """
         raise NotImplementedError()
@@ -49,7 +51,7 @@ class JobTokenizer(Tokenizer):
 
     becomes...
 
-        myproject::job[param0=0,param1=1]
+        "myproject::job[param0=0,param1=1]"
 
     """
 
@@ -58,7 +60,7 @@ class JobTokenizer(Tokenizer):
             r"(?P<project>\w+)::(?P<job>\w+)(?P<params>\[(\w+=\w+,?)*\])?"
         )
 
-    def encode(self, project, job, params):
+    def encode(self, project, job, params, show_params=True):
         if not project:
             raise ValueError("project name is empty")
 
@@ -67,9 +69,10 @@ class JobTokenizer(Tokenizer):
 
         # convert parameters
         params_arg = list()
-        for key, value in params.items():
-            arg = "%s=%s" % (key, value)
-            params_arg.append(arg)
+        if show_params:
+            for key, value in params.items():
+                arg = "%s=%s" % (key, value)
+                params_arg.append(arg)
 
         # convert string
         encoded = "%s::%s" % (project, job)

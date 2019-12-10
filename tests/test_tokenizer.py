@@ -24,6 +24,13 @@ class TestJobTokenizer:
         assert "myproject::myjob" == tokenizer.encode(
             "myproject", "myjob", dict())
 
+    def test_encode_hide_params(self, tokenizer):
+        """
+        Test encode method with show_params=False
+        """
+        assert "myproject::myjob" == tokenizer.encode(
+            "myproject", "myjob", dict(param0="0"), show_params=False)
+
     def test_encode_single_param(self, tokenizer):
         """
         Test encode method with a single parameter for one job
