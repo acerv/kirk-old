@@ -33,7 +33,7 @@ class Tokenizer:
         Decode a token string into project name, job name and job parameters.
         :param token: token string
         :type token: str
-        :return: (str, str, list(str))
+        :return: (str, str, dict)
         """
         raise NotImplementedError()
 
