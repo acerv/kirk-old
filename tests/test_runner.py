@@ -2,9 +2,10 @@
 runner module tests.
 """
 import jenkins
-import kirk.loader
+import kirk.utils
 import kirk.credentials
-from kirk.runner import Runner
+from kirk.runner import JobRunner
+from kirk.credentials import PlaintextCredentials
 
 MOCKED = True
 
@@ -42,19 +43,18 @@ def test_runner_run(tmp_path, mocker):
         # test with existing jobs
         mocker.patch('jenkins.Jenkins.job_exists', return_value=True)
 
-    projects = kirk.loader.load(str(tmp_path))
+    jobs = kirk.utils.get_jobs_from_folder(str(tmp_path))
 
     # create credentials file
-    credentials = tmp_path / "credentials.cfg"
-    kirk.credentials.set_password(
-        credentials,
+    credentials = PlaintextCredentials(tmp_path / "credentials.cfg")
+    credentials.set_password(
         "http://localhost:8080",
         "kirk",
         "6336b50de5944aca821aa8131360886b")
 
-    runner = Runner(credentials, projects)
-    runner.run('project0', 'test_name0')
-    runner.run('project0', 'test_name0', user="admin")
+    runner = JobRunner(credentials)
+    runner.run(jobs[0])
+    runner.run(jobs[0], user="admin")
 
     if MOCKED:
         # check if jobs are reconfigured
@@ -80,8 +80,8 @@ def test_runner_run(tmp_path, mocker):
         # test with jobs that doesn't exist
         mocker.patch('jenkins.Jenkins.job_exists', return_value=False)
 
-    runner.run('project0', 'test_name0')
-    runner.run('project0', 'test_name0', user="admin")
+    runner.run(jobs[0])
+    runner.run(jobs[0], user="admin")
 
     if MOCKED:
         jenkins.Jenkins.create_job.assert_called()
