@@ -29,7 +29,7 @@ class TestJobTokenizer:
         Test encode method with show_params=False
         """
         assert "myproject::myjob" == tokenizer.encode(
-            "myproject", "myjob", dict(param0="0"), show_params=False)
+            "myproject", "myjob", None)
 
     def test_encode_single_param(self, tokenizer):
         """

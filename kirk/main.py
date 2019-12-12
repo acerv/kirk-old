@@ -7,9 +7,10 @@
 """
 import os
 import click
-import kirk.loader
-import kirk.credentials
-from kirk.runner import Runner
+import kirk.utils
+from kirk.runner import JobRunner
+from kirk.credentials import PlaintextCredentials
+from kirk.tokenizer import JobTokenizer
 
 
 class Arguments:
@@ -19,27 +20,58 @@ class Arguments:
 
     def __init__(self):
         self.credentials = "credentials.cfg"
-        self.projects = "projects"
-        self.debug = False
         self.rootdir = os.path.abspath(os.path.curdir)
+        self.credentials_hdl = None
+        self.runner = None
+        self.jobs = None
+        self.debug = False
 
 
 pass_arguments = click.make_pass_decorator(Arguments, ensure=True)
+
+
+def load_jobs(folder):
+    """
+    Return the list of the available jobs.
+    """
+    jobs = None
+    try:
+        jobs = kirk.utils.get_jobs_from_folder(folder)
+        click.secho("collected %d jobs\n" %
+                    len(jobs), fg="white", bold=True)
+    except Exception as err:
+        click.secho("ERROR: %s" % err, fg="red", bold=True, err=True)
+
+    return jobs
+
+
+def load_projects(jobs):
+    """
+    Return the list of the available project.
+    """
+    projects = list()
+    for job in jobs:
+        if job.project not in projects:
+            projects.append(job.project)
+
+    return projects
 
 
 @click.group()
 @click.option('-c', '--credentials', default="credentials.cfg", help="credentials file")
 @click.option('-p', '--projects', default="projects", help="projects folder")
 @click.option('-d', '--debug', is_flag=True, default=False, help="debug mode")
+@click.option('-o', '--owner', required=False, nargs=1, default=False, help="main user")
 @pass_arguments
-def client(args, credentials, projects, debug):
+def client(args, credentials, projects, debug, owner):
     """
     Kirk - Jenkins remote tester
     """
     # initialize configurations
-    args.credentials = credentials
-    args.projects = projects
+    args.jobs = load_jobs(projects)
     args.debug = debug
+    args.credentials_hdl = PlaintextCredentials(credentials)
+    args.runner = JobRunner(args.credentials_hdl, owner=owner)
 
     # start session
     if debug:
@@ -51,108 +83,46 @@ def client(args, credentials, projects, debug):
     click.echo()
 
 
-def load_projects(args):
-    """
-    Return the list of the available projects.
-    """
-    if not os.path.isdir(args.projects):
-        click.secho("ERROR: projects folder doesn't exist",
-                    fg="red", bold=True, err=True)
-        return None
-
-    projects = None
-    try:
-        projects = kirk.loader.load(args.projects)
-        click.secho("collected %d items\n" %
-                    len(projects), fg="white", bold=True)
-    except Exception as err:
-        click.secho("ERROR: %s" % err, fg="red", bold=True, err=True)
-
-    return projects
-
-
-def get_available_tests(args):
-    """
-    Return projects and the list of available tests.
-    """
-    projects = load_projects(args)
-    if not projects:
-        return None, None
-
-    tests = list()
-    for proj in projects:
-        for job in proj.jobs:
-            tests.append("%s::%s" % (proj.name, job.name))
-    return projects, tests
-
-
 @client.command()
 @pass_arguments
-@click.argument("projects", nargs=-1)
-def info(args, projects):
+@click.option('-j', '--jobs', is_flag=True, default=False, help="list the available of jobs")
+@click.option('-p', '--projects', is_flag=True, default=False, help="list the available projects")
+@click.argument("job_repr", required=False, default=None, nargs=1)
+def show(args, jobs, projects, job_repr):
     """
-    show projects informations
+    show informations about available projects or jobs
 
-    Usage:
+    To show jobs (default behaviour):
 
-        kirk info <projectname>
+        kirk show --jobs
 
-    """
-    available_projects, _ = get_available_tests(args)
-    if not available_projects:
-        return
+    To show projects:
 
-    all_projects = [proj.name for proj in available_projects]
-    not_available = list()
-    for proj_in in projects:
-        if proj_in not in all_projects:
-            not_available.extend(proj_in)
-
-    if not_available:
-        click.secho("ERROR: following projects are not available", fg="red")
-        for project in not_available:
-            click.echo("    %s" % project)
-        return
-
-    for project in projects:
-        for proj in available_projects:
-            if project == proj.name:
-                click.secho(proj.name, fg="white", bold=True)
-                click.echo("    description: %s" % proj.description)
-                click.echo("    author: %s" % proj.author)
-                click.echo("    year: %s" % proj.year)
-                click.echo("    version: %s" % proj.version)
-                click.echo("    location: %s" % proj.location)
-                click.echo("    jobs:")
-
-                for job in proj.jobs:
-                    click.echo("        %s" % job.name)
-                break
-
-
-@client.command()
-@pass_arguments
-def show(args):
-    """
-    list projects and tests inside projects folder
-
-    Usage:
-
-        kirk list
+        kirk show --projects
 
     """
-    projects, tests = get_available_tests(args)
-    if not projects or not tests:
-        return
+    if jobs:
+        if not args.jobs:
+            return
 
-    click.secho("available projects", fg="white", bold=True)
-    for project in projects:
-        click.echo("    %s" % project.name)
-    click.echo()
+        click.secho("available jobs", fg="white", bold=True)
+        for job in args.jobs:
+            click.echo("  %s" % str(job))
+            if job.parameters:
+                for param in job.parameters:
+                    click.echo("  - %s" % str(param))
+                click.echo()
+    elif projects:
+        proj_list = load_projects(args.jobs)
+        if not proj_list:
+            return
 
-    click.secho("available tests", fg="white", bold=True)
-    for test in tests:
-        click.echo("    %s" % test)
+        click.secho("available projects", fg="white", bold=True)
+        for project in proj_list:
+            click.echo("  %s" % project.name)
+            for job in project.jobs:
+                click.echo("   - %s" % job.name)
+            click.echo()
 
 
 @client.command()
@@ -164,20 +134,23 @@ def search(args, testregexp):
 
     Usage:
 
-        kirk search .*test_lint.*
+        kirk search .*unittest.*
 
     """
-    projects, tests = get_available_tests(args)
-    if not projects or not tests:
+    projects = load_projects(args.jobs)
+    if not projects:
         return
 
-    found = kirk.loader.search(testregexp, projects)
-    if not found:
-        click.secho("no tests found.")
-    else:
-        click.secho("found tests", fg="white", bold=True)
-        for proj, job in found:
-            click.echo("    %s::%s" % (proj, job))
+    try:
+        found = kirk.utils.get_project_regexp(testregexp, projects)
+        if not found:
+            click.secho("no tests found.")
+        else:
+            click.secho("found tests", fg="white", bold=True)
+            for job in found:
+                click.echo("  %s" % str(job))
+    except Exception as err:
+        click.secho("ERROR: %s" % str(err), fg="red")
 
 
 @client.command()
@@ -197,21 +170,7 @@ def run(args, tests, user):
         kirk run -u <myuser> <myproject>::<mytest> ...
 
     """
-    projects, all_tests = get_available_tests(args)
-    if not projects or not all_tests:
-        return
-
-    not_available = list()
-    for test in tests:
-        if test not in all_tests:
-            not_available.append(test)
-
-    if not_available:
-        click.secho("ERROR: following tests are not available", fg="red")
-        for test in not_available:
-            click.echo("    %s" % test)
-
-        click.echo("\nplease use 'show' command to list available tests")
+    if not args.jobs:
         return
 
     # show found tests
@@ -220,15 +179,46 @@ def run(args, tests, user):
         click.echo("  " + test)
     click.echo()
 
-    # run all tests
+    # get jobs to run
+    jobs_to_run = list()
+    tokenizer = JobTokenizer()
+    for test in tests:
+        for job in args.jobs:
+            if test != str(job):
+                continue
+
+            # we found the job
+            jobs_to_run.append(job)
+
+            # update job parameters
+            _, _, params = tokenizer.decode(test)
+            if not params:
+                break
+
+            for key, value in params.items():
+                for i in range(0, len(job.parameters)):
+                    if job.parameters[i].name == key:
+                        job.parameters[i].value = value
+                        break
+
+    if len(jobs_to_run) != len(tests):
+        click.secho("ERROR: cannot find the following jobs", fg="red")
+
+        not_available = list(tests)
+        for job in jobs_to_run:
+            not_available.remove(str(job))
+
+        for test in not_available:
+            click.echo("  %s" % test)
+
+        click.echo("\nplease use 'show' command to list available tests")
+        return
+
     try:
-        runner = Runner(args.credentials, projects)
-        for test in tests:
-            click.secho("-> running %s" % test)
-
-            project, job = test.split("::")
-            job_location = runner.run(project, job, user)
-
+        # run all tests
+        for job in jobs_to_run:
+            click.secho("-> running %s" % str(job))
+            job_location = args.runner.run(job, user)
             click.secho("-> configured %s" % job_location, fg="green")
     except Exception as err:
         click.secho(str(err), fg="red", err=True)
@@ -250,12 +240,12 @@ def credential(args, credential):
     user = credential[1]
 
     click.secho("saving credential:", fg="white", bold=True)
-    click.echo("    url:  %s" % url)
-    click.echo("    user: %s" % user)
+    click.echo("  url:  %s" % url)
+    click.echo("  user: %s" % user)
 
-    password = click.prompt("    type your password", hide_input=True)
+    password = click.prompt("  type your password", hide_input=True)
 
-    kirk.credentials.set_password(args.credentials, url, user, password)
+    args.credentials_hdl.set_password(url, user, password)
 
     click.echo()
     click.secho("credential saved", fg="green")

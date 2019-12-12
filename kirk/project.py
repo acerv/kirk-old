@@ -1,7 +1,7 @@
 """
-.. module:: config
+.. module:: project
    :platform: Multiplatform
-   :synopsis: configuration handling module
+   :synopsis: project handling module
    :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
@@ -12,6 +12,7 @@ import yaml
 from pykwalify.core import Core
 from pykwalify.errors import PyKwalifyException
 from kirk import KirkError
+from kirk.tokenizer import JobTokenizer
 
 
 class JobParameter:
@@ -74,7 +75,9 @@ class JobItem:
     Jenkins job to be executed.
     """
 
-    def __init__(self, defaults_cfg, job_cfg):
+    def __init__(self, defaults_cfg, job_cfg, project):
+        self._tokenizer = JobTokenizer()
+
         # read server url
         # TODO: validate url syntax
         self._server = defaults_cfg['server']
@@ -105,6 +108,9 @@ class JobItem:
         if 'parameters' in job_cfg:
             job_params = job_cfg['parameters']
 
+        # project location in the jenkins server
+        self._project = project
+
         # merge parameters
         parameters = list()
 
@@ -130,6 +136,22 @@ class JobItem:
         self._parameters = list()
         for param in parameters:
             self._parameters.append(JobParameter(param))
+
+    def __str__(self):
+        return self._tokenizer.encode(
+            self.project.name,
+            self.name,
+            None)
+
+    def __repr__(self):
+        params = dict()
+        for param in self.parameters:
+            params[param.name] = param.value
+
+        return self._tokenizer.encode(
+            self.project.name,
+            self.name,
+            params)
 
     @property
     def name(self):
@@ -172,6 +194,13 @@ class JobItem:
         Jenkins job scm configuration.
         """
         return self._scm
+
+    @property
+    def project(self):
+        """
+        Project object for this job.
+        """
+        return self._project
 
 
 class Project:
@@ -269,7 +298,7 @@ class Project:
 
         self._jobs.clear()
         for job_cfg in jobs:
-            new_job = JobItem(defaults_cfg, job_cfg)
+            new_job = JobItem(defaults_cfg, job_cfg, self)
             for job in self._jobs:
                 if job.name == new_job.name:
                     raise KirkError(

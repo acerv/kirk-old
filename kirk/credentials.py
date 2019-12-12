@@ -7,36 +7,71 @@
 """
 from keyrings.alt.file import PlaintextKeyring
 
-inkr = PlaintextKeyring()
+
+class Credentials:
+    """
+    Base class for a credentials handler
+    """
+
+    def get_password(self, section, username):
+        """
+        Return a password stored inside the keyrings file.
+        :param section: section of the username
+        :type section: str
+        :param username: user name
+        :type username: str
+        :return: password as string
+        """
+        raise NotImplementedError()
+
+    def set_password(self, section, username, password):
+        """
+        Set the user password inside keyrings file.
+        :param section: section of the username
+        :type section: str
+        :param username: user name
+        :type username: str
+        :param password: user password
+        :type username: str
+        """
+        raise NotImplementedError()
 
 
-def get_password(file_path, section, username):
+class PlaintextCredentials(Credentials):
     """
-    Return a password stored inside the keyrings file.
-    :param file_path: keyrings file path
-    :type file_path: str
-    :param section: section of the username
-    :type section: str
-    :param username: user name
-    :type username: str
-    :return: password as string
+    Save/Load credentials from a plaintext file.
     """
-    inkr.file_path = file_path
-    password = inkr.get_password(section, username)
-    return password
 
+    def __init__(self, file_path):
+        """
+        :param file_path: keyrings file path
+        :type file_path: str
+        """
+        self._file_path = file_path
+        self._inkr = PlaintextKeyring()
 
-def set_password(file_path, section, username, password):
-    """
-    Set the user password inside keyrings file.
-    :param file_path: keyrings file path
-    :type file_path: str
-    :param section: section of the username
-    :type section: str
-    :param username: user name
-    :type username: str
-    :param password: user password
-    :type username: str
-    """
-    inkr.file_path = file_path
-    password = inkr.set_password(section, username, password)
+    def get_password(self, section, username):
+        """
+        Return a password stored inside the keyrings file.
+        :param section: section of the username
+        :type section: str
+        :param username: user name
+        :type username: str
+        :return: password as string
+        """
+        self._inkr.file_path = self._file_path
+        password = self._inkr.get_password(section, username)
+        return password
+
+    def set_password(self, section, username, password):
+        """
+        Set the user password inside keyrings file.
+        :param section: section of the username
+        :type section: str
+        :param username: user name
+        :type username: str
+        :param password: user password
+        :type username: str
+        """
+        self._inkr.file_path = self._file_path
+        password = self._inkr.set_password(section, username, password)

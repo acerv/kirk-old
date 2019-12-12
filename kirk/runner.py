@@ -2,7 +2,6 @@
 .. module:: runner
    :platform: Multiplatform
    :synopsis: Module containing source code for jenkins job executions
-   :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
@@ -10,52 +9,75 @@ import re
 from datetime import date
 import logging
 import jenkins
-import kirk.credentials
 from kirk import KirkError
 
 
 class Runner:
     """
-    Runner class for projects files.
+    base class for Jenkins job runner.
     """
 
-    RUNNER_USER = "kirk"
-
-    def __init__(self, credentials, projects):
+    def run(self, job, user=None, dev_folder="dev"):
         """
-        :param credentials: file where credentials are stored
-        :type credentials: str
+        Run a jenkins job for the given user.
+        :param job: job to run
+        :type job: JobItem
+        :param user: user name running the job. This parameter is used to
+            create the jenkins job. For example, if user="myuser", the ending
+            job will be stored inside the following folder:
+
+                myjenkins.com:8080/job/myproject/job/dev/job/myuser/job/myjob/
+
+            If no user has provided, job will be created and run inside the
+            main project folder. For example:
+
+                myjenkins.com:8080/job/myproject/job/myjob/
+
+        :param dev_folder: folder where user jobs are stored (default: 'dev')
+        :type dev_folder: str
+        :return: url as string where job has been created
+        """
+        raise NotImplementedError()
+
+
+class JobRunner(Runner):
+    """
+    Jenkins job runner.
+    """
+
+    def __init__(self, credentials, owner="kirk"):
+        """
+        :param credentials: credentials handler object
+        :type credentials: Credentials
         :param projects: list of the projects to load
         :type projects: list(Project)
+        :param owner: owner username to create jobs in the jenkins server
+        :type owner: str
         """
         self._logger = logging.getLogger("runner")
-        self._server = None
         self._credentials = credentials
-        self._projects = projects
+        self._owner = owner
+        self._server = None
 
     def _open_connection(self, job):
         """
         Open a connection with Jenkins server.
         """
         self._logger.info("getting kirk credentials")
-        password = kirk.credentials.get_password(
-            self._credentials,
-            job.server,
-            self.RUNNER_USER
-        )
+        password = self._credentials.get_password(job.server, self._owner)
 
         self._logger.info("connecting to '%s'", job.server)
-        server = jenkins.Jenkins(job.server, self.RUNNER_USER, password)
+        server = jenkins.Jenkins(job.server, self._owner, password)
         return server
 
-    def _setup_project_folder(self, location, user=None):
+    def _setup_project_folder(self, job, user=None, dev_folder="dev"):
         """
         Setup a project folder creating directories and seed job.
         Return the project location.
         """
-        dev_location = location
+        dev_location = job.project.location
         if user:
-            dev_location = "/".join([location, "dev", user])
+            dev_location = "/".join([dev_location, dev_folder, user])
 
         self._logger.info("setting up project folder '%s'", dev_location)
 
@@ -126,55 +148,22 @@ class Runner:
 
         return seed_location
 
-    def run(self, proj_name, job_name, user=None):
-        """
-        Run a job for the given project.
-        :param proj_name: project name
-        :type proj_name: str
-        :param job_name: job name
-        :type job_name: str
-        :param user: developer name
-        :type user: str
-        :return: jenkins job location
-        """
-        if not proj_name:
-            raise ValueError("proj_name")
+    def run(self, job, user=None, dev_folder="dev"):
+        if not job:
+            raise ValueError("job is None")
 
-        if not job_name:
-            raise ValueError("job_name")
+        if not dev_folder:
+            raise ValueError("dev_folder is empty")
 
-        if not self._projects:
-            raise KirkError("No projects loaded")
-
-        # find the project
-        project = None
-        for proj in self._projects:
-            if proj.name == proj_name:
-                project = proj
-                break
-
-        if not project:
-            raise KirkError("No project with name '%s'" % proj_name)
-
-        if not project.jobs:
-            raise KirkError("No jobs found for project '%s'" % proj_name)
-
-        # find the job
-        job_to_run = None
-        for job in project.jobs:
-            if job.name == job_name:
-                job_to_run = job
-                break
-
-        self._server = self._open_connection(job_to_run)
+        self._server = self._open_connection(job)
         try:
             proj_folder = None
 
             # create project folder
-            proj_folder = self._setup_project_folder(proj.location, user)
+            proj_folder = self._setup_project_folder(job, user)
 
             # create seed
-            seed_location = self._create_seed(proj_folder, job_to_run)
+            seed_location = self._create_seed(proj_folder, job)
 
             # run seed
             params = dict()

@@ -4,7 +4,7 @@ config module tests.
 import os
 import pytest
 from kirk import KirkError
-from kirk.config import Project
+from kirk.project import Project
 
 
 def test_project_empty_path():
@@ -112,6 +112,44 @@ def test_project_base(tmp_path):
     assert jobs[0].name == "Test_mytest"
     assert jobs[0].server == "myserver.com"
     assert jobs[0].pipeline == "pipeline.groovy"
+    assert jobs[0].project == proj
+
+
+def test_project_job_str(tmp_path):
+    """
+    Test job string rapresentation.
+    """
+    project_file = tmp_path / "project.yml"
+    project_file.write_text("""
+        name: project
+        description: my project
+        author: pippo
+        year: 3010
+        version: 1.0
+        location: myProject
+        defaults:
+            server: myserver.com
+        jobs:
+            - name: Test_mytest
+              pipeline: pipeline.groovy
+              parameters:
+                - name: JK_TEST_0
+                  label: Test name 0
+                  default: test_something_0
+                  show: false
+                - name: JK_TEST_1
+                  label: Test name 1
+                  default: test_something_1
+                  show: false
+    """)
+    proj = Project()
+    proj.load(str(project_file.absolute()))
+
+    jobs = proj.jobs
+    assert len(jobs) == 1
+    assert str(jobs[0]) == "project::Test_mytest"
+    assert repr(jobs[0]) == "project::Test_mytest" \
+        "[JK_TEST_0=test_something_0,JK_TEST_1=test_something_1]"
 
 
 def test_project_multiple_jobs(tmp_path):
