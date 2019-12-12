@@ -75,10 +75,11 @@ def get_project_regexp(regexp, projects):
     if not projects:
         raise ValueError("projects are empty")
 
+    matcher = re.compile(regexp)
     found = list()
     for proj in projects:
         for job in proj.jobs:
-            if re.match(regexp, str(job)):
+            if matcher.match(str(job)):
                 found.append(job)
 
     return found
