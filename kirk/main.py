@@ -47,7 +47,7 @@ def load_jobs(folder):
 
 def load_projects(jobs):
     """
-    Return the list of the available project.
+    Return the list of the available projects.
     """
     projects = list()
     for job in jobs:
@@ -127,10 +127,10 @@ def show(args, jobs, projects, job_repr):
 
 @client.command()
 @pass_arguments
-@click.argument("testregexp", nargs=1)
-def search(args, testregexp):
+@click.argument("regexp", nargs=1)
+def search(args, regexp):
     """
-    search for tests inside project files using regexp
+    search for jobs inside project files using regexp
 
     Usage:
 
@@ -142,11 +142,11 @@ def search(args, testregexp):
         return
 
     try:
-        found = kirk.utils.get_project_regexp(testregexp, projects)
+        found = kirk.utils.get_project_regexp(regexp, projects)
         if not found:
-            click.secho("no tests found.")
+            click.secho("no jobs found.")
         else:
-            click.secho("found tests", fg="white", bold=True)
+            click.secho("found jobs", fg="white", bold=True)
             for job in found:
                 click.echo("  %s" % str(job))
     except Exception as err:
@@ -156,10 +156,10 @@ def search(args, testregexp):
 @client.command()
 @pass_arguments
 @click.option('-u', '--user', default=None, help="Jenkins username")
-@click.argument("tests", nargs=-1)
-def run(args, tests, user):
+@click.argument("jobs_repr", nargs=-1)
+def run(args, jobs_repr, user):
     """
-    run a list of tests
+    run a list of jobs
 
     Usage, to run as owner:
 
@@ -174,50 +174,48 @@ def run(args, tests, user):
         return
 
     # show found tests
-    click.secho("selected tests", fg="white", bold=True)
-    for test in tests:
-        click.echo("  " + test)
+    click.secho("selected jobs", fg="white", bold=True)
+    for job_str in jobs_repr:
+        click.echo("  " + job_str)
     click.echo()
 
     # get jobs to run
-    jobs_to_run = list()
+    jobs_to_run = dict()
     tokenizer = JobTokenizer()
-    for test in tests:
+
+    for job_str in jobs_repr:
         for job in args.jobs:
-            if test != str(job):
+            if job_str != str(job):
                 continue
 
             # we found the job
-            jobs_to_run.append(job)
+            jobs_to_run[job_str] = job
 
             # update job parameters
-            _, _, params = tokenizer.decode(test)
-            if not params:
-                break
-
-            for key, value in params.items():
+            _, _, params = tokenizer.decode(job_str)
+            for name, value in params.items():
                 for i in range(0, len(job.parameters)):
-                    if job.parameters[i].name == key:
+                    if job.parameters[i].name == name:
                         job.parameters[i].value = value
                         break
 
-    if len(jobs_to_run) != len(tests):
+    if len(jobs_to_run) != len(jobs_repr):
         click.secho("ERROR: cannot find the following jobs", fg="red")
 
-        not_available = list(tests)
-        for job in jobs_to_run:
-            not_available.remove(str(job))
+        not_available = list(jobs_repr)
+        for key, value in jobs_to_run.items():
+            not_available.remove(key)
 
-        for test in not_available:
-            click.echo("  %s" % test)
+        for job_str in not_available:
+            click.echo("  %s" % job_str)
 
-        click.echo("\nplease use 'show' command to list available tests")
+        click.echo("\nplease use 'show' command to list available jobs")
         return
 
     try:
         # run all tests
-        for job in jobs_to_run:
-            click.secho("-> running %s" % str(job))
+        for job_str, job in jobs_to_run.items():
+            click.secho("-> running %s" % job_str)
             job_location = args.runner.run(job, user)
             click.secho("-> configured %s" % job_location, fg="green")
     except Exception as err:
