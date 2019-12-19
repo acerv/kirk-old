@@ -27,6 +27,10 @@ class JobParameter:
         self._value = params_cfg.get('default', '')
         self._show = params_cfg.get('show', True)
 
+    def __str__(self):
+        param = "%s=%s" % (self._name, self._value)
+        return param
+
     @property
     def name(self):
         """

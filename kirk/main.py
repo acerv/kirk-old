@@ -6,6 +6,7 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
+import traceback
 import click
 import kirk.utils
 from kirk.runner import JobRunner
@@ -61,7 +62,7 @@ def load_projects(jobs):
 @click.option('-c', '--credentials', default="credentials.cfg", help="credentials file")
 @click.option('-p', '--projects', default="projects", help="projects folder")
 @click.option('-d', '--debug', is_flag=True, default=False, help="debug mode")
-@click.option('-o', '--owner', required=False, nargs=1, default=False, help="main user")
+@click.option('-o', '--owner', required=False, nargs=1, default='kirk', help="main user")
 @pass_arguments
 def client(args, credentials, projects, debug, owner):
     """
@@ -78,6 +79,7 @@ def client(args, credentials, projects, debug, owner):
         click.secho("debugging session\n", fg="green", bold=True)
 
     click.echo("session started")
+    click.echo("owner: %s" % owner)
     click.echo("rootdir: %s" % args.rootdir)
     click.echo("credentials: %s, projects: %s" % (credentials, projects))
     click.echo()
@@ -151,11 +153,14 @@ def search(args, regexp):
                 click.echo("  %s" % str(job))
     except Exception as err:
         click.secho("ERROR: %s" % str(err), fg="red")
+        if args.debug:
+            msg = traceback.format_exc()
+            click.secho(msg, fg="red", err=True)
 
 
 @client.command()
 @pass_arguments
-@click.option('-u', '--user', default=None, help="Jenkins username")
+@click.option('-u', '--user', default="", type=str, help="Jenkins username")
 @click.argument("jobs_repr", nargs=-1)
 def run(args, jobs_repr, user):
     """
@@ -184,20 +189,19 @@ def run(args, jobs_repr, user):
     tokenizer = JobTokenizer()
 
     for job_str in jobs_repr:
+        _, job_name, params = tokenizer.decode(job_str)
+
         for job in args.jobs:
-            if job_str != str(job):
-                continue
+            if job_name == job.name:
+                # we found the job
+                jobs_to_run[job_str] = job
+                break
 
-            # we found the job
-            jobs_to_run[job_str] = job
-
-            # update job parameters
-            _, _, params = tokenizer.decode(job_str)
-            for name, value in params.items():
-                for i in range(0, len(job.parameters)):
-                    if job.parameters[i].name == name:
-                        job.parameters[i].value = value
-                        break
+        for name, value in params.items():
+            for i in range(0, len(job.parameters)):
+                if job.parameters[i].name == name:
+                    job.parameters[i].value = value
+                    break
 
     if len(jobs_to_run) != len(jobs_repr):
         click.secho("ERROR: cannot find the following jobs", fg="red")
@@ -215,11 +219,14 @@ def run(args, jobs_repr, user):
     try:
         # run all tests
         for job_str, job in jobs_to_run.items():
-            click.secho("-> running %s" % job_str)
+            click.secho("-> running %s (user='%s')" % (job_str, user))
             job_location = args.runner.run(job, user)
             click.secho("-> configured %s" % job_location, fg="green")
     except Exception as err:
         click.secho(str(err), fg="red", err=True)
+        if args.debug:
+            msg = traceback.format_exc()
+            click.secho(msg, fg="red", err=True)
 
 
 @client.command()

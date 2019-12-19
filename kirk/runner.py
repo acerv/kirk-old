@@ -96,6 +96,20 @@ class JobRunner(Runner):
 
         return dev_location
 
+    def _create_param_xml(self, name, label, value):
+        """
+        create the xml for a job parameters
+        """
+        xml = """
+        <hudson.model.StringParameterDefinition>
+          <name>%s</name>
+          <description>%s</description>
+          <defaultValue>%s</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        """ % (name, label, value)
+        return xml
+
     def _create_seed(self, location, job):
         """
         Create the job seed location.
@@ -126,6 +140,18 @@ class JobRunner(Runner):
                     "'%s' scm is not supported" % job.scm)
         else:
             seed_file = os.path.join(currdir, "files", "job_noscm.xml")
+
+        # create xml according with job parameters
+        xml_params = list()
+        if job.parameters:
+            for param in job.parameters:
+                xml = self._create_param_xml(
+                    param.name,
+                    param.label,
+                    param.value)
+                xml_params.append(xml)
+
+        params['KIRK_PARAMETERS'] = '\n'.join(xml_params)
 
         seed_xml = None
         with open(seed_file, 'r') as seed:
