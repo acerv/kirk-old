@@ -5,12 +5,12 @@
    :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
-
 from setuptools import setup, find_packages
+from kirk import __version__
 
 setup(
     name='kirk',
-    version='1.0',
+    version=__version__,
     description='Jenkins Remote Launcher',
     author='Andrea Cervesato',
     author_email='andrea.cervesato@mailbox.org',
