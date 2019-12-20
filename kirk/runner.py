@@ -98,17 +98,36 @@ class JobRunner(Runner):
 
     def _create_param_xml(self, name, label, value):
         """
-        create the xml for a job parameters
+        create the xml for a job single parameter
         """
         xml = """
-        <hudson.model.StringParameterDefinition>
-          <name>%s</name>
-          <description>%s</description>
-          <defaultValue>%s</defaultValue>
-          <trim>false</trim>
-        </hudson.model.StringParameterDefinition>
+            <hudson.model.StringParameterDefinition>
+            <name>%s</name>
+            <description>%s</description>
+            <defaultValue>%s</defaultValue>
+            <trim>false</trim>
+            </hudson.model.StringParameterDefinition>
         """ % (name, label, value)
         return xml
+
+    def _create_params_xml(self, params):
+        """
+        create the xml for job parameters
+        """
+        xml_params = list()
+        if params:
+            xml_params.append("<hudson.model.ParametersDefinitionProperty>")
+            xml_params.append("<parameterDefinitions>\n")
+            for param in params:
+                xml = self._create_param_xml(
+                    param.name,
+                    param.label,
+                    param.value)
+                xml_params.append(xml)
+            xml_params.append("</parameterDefinitions>")
+            xml_params.append("</hudson.model.ParametersDefinitionProperty>")
+
+        return '\n'.join(xml_params)
 
     def _create_seed(self, location, job):
         """
@@ -142,16 +161,8 @@ class JobRunner(Runner):
             seed_file = os.path.join(currdir, "files", "job_noscm.xml")
 
         # create xml according with job parameters
-        xml_params = list()
-        if job.parameters:
-            for param in job.parameters:
-                xml = self._create_param_xml(
-                    param.name,
-                    param.label,
-                    param.value)
-                xml_params.append(xml)
-
-        params['KIRK_PARAMETERS'] = '\n'.join(xml_params)
+        xml_params = self._create_params_xml(job.parameters)
+        params['KIRK_PARAMETERS'] = xml_params
 
         seed_xml = None
         with open(seed_file, 'r') as seed:

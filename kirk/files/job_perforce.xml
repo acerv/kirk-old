@@ -3,12 +3,7 @@
   <!-- Generics -->
   <description>KIRK_DESCRIPTION</description>
   <keepDependencies>false</keepDependencies>
-  <properties>
-    <!-- Parameters -->
-    <hudson.model.ParametersDefinitionProperty>
-      <parameterDefinitions>KIRK_PARAMETERS</parameterDefinitions>
-    </hudson.model.ParametersDefinitionProperty>
-  </properties>
+  <properties>KIRK_PARAMETERS</properties>
     <!-- SCM pipeline setup -->
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
     <scm class="org.jenkinsci.plugins.p4.PerforceScm" plugin="p4">
