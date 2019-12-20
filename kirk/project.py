@@ -6,11 +6,10 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
-import re
 import logging
-import yaml
 from pykwalify.core import Core
 from pykwalify.errors import PyKwalifyException
+import kirk.yaml_env as yaml_env
 from kirk import KirkError
 from kirk.tokenizer import JobTokenizer
 
@@ -222,57 +221,6 @@ class Project:
         self._location = ""
         self._jobs = list()
 
-    @staticmethod
-    def _yaml_constructor(loader, node):
-        """
-        Get environment variables.
-        """
-        pattern = re.compile(r'.*?\${(\w+)}.*?')
-        value = loader.construct_scalar(node)
-        match = pattern.findall(value)  # to find all env variables in line
-        if match:
-            full_value = value
-            for g in match:
-                full_value = full_value.replace(
-                    f'${{{g}}}', os.environ.get(g, g)
-                )
-            return full_value
-        return value
-
-    def _yaml_load(self, path, tag="!ENV"):
-        """
-        Load yaml file and return data.
-        """
-        # check for project file extension
-        _, file_ext = os.path.splitext(path)
-        if file_ext not in ('.yml', '.yaml'):
-            raise KirkError("'%s' file type is not supported" % file_ext)
-
-        # validate project file
-        self._logger.info("validating file '%s'" % path)
-
-        try:
-            currdir = os.path.abspath(os.path.dirname(__file__))
-            schemafile = os.path.join(currdir, "files", "schema.yml")
-            validator = Core(source_file=path, schema_files=[schemafile])
-            validator.validate(raise_exception=True)
-        except PyKwalifyException as err:
-            raise KirkError(err)
-
-        self._logger.info("loading file '%s'" % path)
-
-        imp_pattern = re.compile(r'%s .*?\${(\w+)}.*?' % tag)
-
-        yaml.SafeLoader.add_implicit_resolver(tag, imp_pattern, None)
-        yaml.SafeLoader.add_constructor(tag, self._yaml_constructor)
-
-        # load project file
-        file_def = dict()
-        with open(path, 'r') as stream:
-            file_def = yaml.load(stream, Loader=yaml.SafeLoader)
-
-        return file_def
-
     def load(self, path):
         """
         Load a project configuration.
@@ -284,7 +232,20 @@ class Project:
             raise ValueError("'path' is empty")
 
         # load project file
-        file_def = self._yaml_load(path)
+        self._logger.info("loading file '%s'", path)
+
+        file_def = yaml_env.load(path)
+
+        # validate project file
+        self._logger.info("validating file '%s'", path)
+
+        try:
+            currdir = os.path.abspath(os.path.dirname(__file__))
+            schemafile = os.path.join(currdir, "files", "schema.yml")
+            validator = Core(source_data=file_def, schema_files=[schemafile])
+            validator.validate(raise_exception=True)
+        except PyKwalifyException as err:
+            raise KirkError(err)
 
         # load project informations
         self._name = file_def['name']
