@@ -169,7 +169,7 @@ class JobRunner(Runner):
             seed_xml = seed.read()
 
         # update xml according with scm configuration
-        pattern = re.compile(r'(?P<variable>KIRK_.+?(?=<))')
+        pattern = re.compile(r'(?P<variable>KIRK_\w+)')
         seed_xml = re.sub(
             pattern, lambda m: params[m.group('variable')], seed_xml)
 
