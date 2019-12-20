@@ -4,12 +4,9 @@
    :synopsis: Module containing source code for jenkins job executions
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
-import os
-import re
-from datetime import date
 import logging
 import jenkins
-from kirk import KirkError
+import kirk.workflow
 from kirk import __version__
 
 
@@ -97,92 +94,12 @@ class JobRunner(Runner):
 
         return dev_location
 
-    def _create_param_xml(self, name, label, value):
-        """
-        create the xml for a job single parameter
-        """
-        xml = """
-            <hudson.model.StringParameterDefinition>
-            <name>%s</name>
-            <description>%s</description>
-            <defaultValue>%s</defaultValue>
-            <trim>false</trim>
-            </hudson.model.StringParameterDefinition>
-        """ % (name, label, value)
-        return xml
-
-    def _create_params_xml(self, params):
-        """
-        create the xml for job parameters
-        """
-        xml_params = list()
-        xml_params.append("<hudson.model.ParametersDefinitionProperty>")
-        xml_params.append("<parameterDefinitions>\n")
-
-        # always add kirk version to parametrize tests
-        xml_params.append(
-            self._create_param_xml(
-                'KIRK_VERSION',
-                'Kirk version',
-                str(__version__))
-        )
-
-        if params:
-            for param in params:
-                xml = self._create_param_xml(
-                    param.name,
-                    param.label,
-                    param.value)
-                xml_params.append(xml)
-
-        xml_params.append("</parameterDefinitions>")
-        xml_params.append("</hudson.model.ParametersDefinitionProperty>")
-
-        return '\n'.join(xml_params)
-
     def _create_seed(self, location, job):
         """
         Create the job seed location.
         """
         # load the xml configuration according with scm
-        seed_file = None
-
-        params = dict()
-        params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
-        params["KIRK_SCRIPT_PATH"] = job.pipeline
-
-        currdir = os.path.abspath(os.path.dirname(__file__))
-        if job.scm:
-            if "perforce" in job.scm:
-                seed_file = os.path.join(currdir, "files", "job_perforce.xml")
-                params["KIRK_P4_CREDENTIAL"] = job.scm["perforce"]["credential"]
-                params["KIRK_P4_CL"] = str(job.scm["perforce"]["changelist"])
-                params["KIRK_P4_WORKSPACE"] = job.scm["perforce"]["workspace"]
-                params["KIRK_P4_STREAM"] = job.scm["perforce"]["stream"]
-            elif "git" in job.scm:
-                seed_file = os.path.join(currdir, "files", "job_git.xml")
-                params["KIRK_GIT_CREDENTIAL"] = job.scm["git"].get(
-                    "credential", "")
-                params["KIRK_GIT_URL"] = job.scm["git"]["url"]
-                params["KIRK_GIT_CHECKOUT"] = job.scm["git"]["checkout"]
-            else:
-                raise NotImplementedError(
-                    "'%s' scm is not supported" % job.scm)
-        else:
-            seed_file = os.path.join(currdir, "files", "job_noscm.xml")
-
-        # create xml according with job parameters
-        xml_params = self._create_params_xml(job.parameters)
-        params['KIRK_PARAMETERS'] = xml_params
-
-        seed_xml = None
-        with open(seed_file, 'r') as seed:
-            seed_xml = seed.read()
-
-        # update xml according with scm configuration
-        pattern = re.compile(r'(?P<variable>KIRK_\w+)')
-        seed_xml = re.sub(
-            pattern, lambda m: params[m.group('variable')], seed_xml)
+        seed_xml = kirk.workflow.build_xml(job)
 
         # create job seed
         seed_location = "/".join([location, job.name])
