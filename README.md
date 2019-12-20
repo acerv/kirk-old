@@ -3,8 +3,8 @@ TODO
 ====
 
 - [x] split Yaml extension into a module
-- [ ] jenkins job xml builder module
-- [ ] split scm configurations
+- [x] jenkins job xml builder module
+- [x] split scm configurations
 - [x] tokenizer to recognize pytest-like syntax to run jobs
 - [x] run jobs with parameters
 - [ ] check minimum jenkins dependences
