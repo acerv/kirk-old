@@ -7,6 +7,7 @@
 import logging
 import jenkins
 import kirk.workflow
+from kirk import __version__
 
 
 class Runner:
@@ -130,7 +131,9 @@ class JobRunner(Runner):
             seed_location = self._create_seed(proj_folder, job)
 
             # run seed
-            params = dict()
+            params = dict(
+                KIRK_VERSION=__version__
+            )
             for param in job.parameters:
                 params[param.name] = param.value
 

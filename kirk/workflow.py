@@ -6,7 +6,6 @@
 """
 import re
 from datetime import date
-from kirk import __version__
 from kirk import KirkError
 
 
@@ -45,7 +44,7 @@ class XmlBuilder:
         xml = self._create_param_xml(
             'KIRK_VERSION',
             'Kirk version',
-            str(__version__))
+            '0.0')
         xml_params.append(xml)
 
         if job.parameters:
