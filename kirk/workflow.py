@@ -87,40 +87,39 @@ class GitSCMFlow(XmlBuilder):
     GIT SCM flow xml generator. It generates something like:
     """
 
-    SEED_XML = """
-        <?xml version='1.1' encoding='UTF-8'?>
-        <flow-definition plugin="workflow-job">
-            <!-- Generics -->
-            <description>KIRK_DESCRIPTION</description>
-            <keepDependencies>false</keepDependencies>
-            <properties>
-            KIRK_PARAMETERS
-            </properties>
-            <!-- SCM pipeline setup -->
-            <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
-                <scm class="hudson.plugins.git.GitSCM" plugin="git">
-                <configVersion>2</configVersion>
-                <userRemoteConfigs>
-                    <hudson.plugins.git.UserRemoteConfig>
-                    <url>KIRK_GIT_URL</url>
-                    <credentialsId>KIRK_GIT_CREDENTIAL</credentialsId>
-                    </hudson.plugins.git.UserRemoteConfig>
-                </userRemoteConfigs>
-                <branches>
-                    <hudson.plugins.git.BranchSpec>
-                    <name>KIRK_GIT_CHECKOUT</name>
-                    </hudson.plugins.git.BranchSpec>
-                </branches>
-                <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-                <submoduleCfg class="list"/>
-                <extensions/>
-                </scm>
-                <scriptPath>KIRK_SCRIPT_PATH</scriptPath>
-                <lightweight>true</lightweight>
-            </definition>
-            <triggers/>
-            <disabled>false</disabled>
-        </flow-definition>
+    SEED_XML = """<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+    <!-- Generics -->
+    <description>KIRK_DESCRIPTION</description>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+    KIRK_PARAMETERS
+    </properties>
+    <!-- SCM pipeline setup -->
+    <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+        <scm class="hudson.plugins.git.GitSCM" plugin="git">
+        <configVersion>2</configVersion>
+        <userRemoteConfigs>
+            <hudson.plugins.git.UserRemoteConfig>
+            <url>KIRK_GIT_URL</url>
+            <credentialsId>KIRK_GIT_CREDENTIAL</credentialsId>
+            </hudson.plugins.git.UserRemoteConfig>
+        </userRemoteConfigs>
+        <branches>
+            <hudson.plugins.git.BranchSpec>
+            <name>KIRK_GIT_CHECKOUT</name>
+            </hudson.plugins.git.BranchSpec>
+        </branches>
+        <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+        <submoduleCfg class="list"/>
+        <extensions/>
+        </scm>
+        <scriptPath>KIRK_SCRIPT_PATH</scriptPath>
+        <lightweight>true</lightweight>
+    </definition>
+    <triggers/>
+    <disabled>false</disabled>
+</flow-definition>
     """
 
     def build_xml(self, job):
@@ -147,65 +146,64 @@ class PerforceSCMFlow(XmlBuilder):
     Perforce SCM flow xml generator.
     """
 
-    SEED_XML = """
-        <?xml version='1.1' encoding='UTF-8'?>
-        <flow-definition plugin="workflow-job">
-            <!-- Generics -->
-            <description>KIRK_DESCRIPTION</description>
-            <keepDependencies>false</keepDependencies>
-            <properties>
-            KIRK_PARAMETERS
-            </properties>
-                <!-- SCM pipeline setup -->
-            <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
-                <scm class="org.jenkinsci.plugins.p4.PerforceScm" plugin="p4">
-                <credential>KIRK_P4_CREDENTIAL</credential>
-                <shelf>KIRK_P4_CL</shelf>
-                <ignoreEmpty>false</ignoreEmpty>
-                <resolve>none</resolve>
-                <tidy>false</tidy>
-                <workspace class="org.jenkinsci.plugins.p4.workspace.ManualWorkspaceImpl">
-                    <charset>none</charset>
-                    <pinHost>false</pinHost>
-                    <name>KIRK_P4_WORKSPACE</name>
-                    <spec>
-                    <allwrite>false</allwrite>
-                    <clobber>true</clobber>
-                    <compress>false</compress>
-                    <locked>false</locked>
-                    <modtime>false</modtime>
-                    <rmdir>false</rmdir>
-                    <streamName>KIRK_P4_STREAM</streamName>
-                    <line>LOCAL</line>
-                    <view></view>
-                    <type>WRITABLE</type>
-                    <serverID></serverID>
-                    <backup>false</backup>
-                    </spec>
-                </workspace>
-                <populate class="org.jenkinsci.plugins.p4.populate.AutoCleanImpl">
-                    <have>true</have>
-                    <force>false</force>
-                    <modtime>false</modtime>
-                    <quiet>true</quiet>
-                    <pin></pin>
-                    <parallel>
-                    <enable>false</enable>
-                    <threads>4</threads>
-                    <minfiles>1</minfiles>
-                    <minbytes>1024</minbytes>
-                    </parallel>
-                    <replace>true</replace>
-                    <delete>true</delete>
-                    <tidy>false</tidy>
-                </populate>
-                </scm>
-                <scriptPath>KIRK_SCRIPT_PATH</scriptPath>
-                <lightweight>true</lightweight>
-            </definition>
-            <triggers/>
-            <disabled>false</disabled>
-        </flow-definition>
+    SEED_XML = """<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+    <!-- Generics -->
+    <description>KIRK_DESCRIPTION</description>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+    KIRK_PARAMETERS
+    </properties>
+        <!-- SCM pipeline setup -->
+    <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+        <scm class="org.jenkinsci.plugins.p4.PerforceScm" plugin="p4">
+        <credential>KIRK_P4_CREDENTIAL</credential>
+        <shelf>KIRK_P4_CL</shelf>
+        <ignoreEmpty>false</ignoreEmpty>
+        <resolve>none</resolve>
+        <tidy>false</tidy>
+        <workspace class="org.jenkinsci.plugins.p4.workspace.ManualWorkspaceImpl">
+            <charset>none</charset>
+            <pinHost>false</pinHost>
+            <name>KIRK_P4_WORKSPACE</name>
+            <spec>
+            <allwrite>false</allwrite>
+            <clobber>true</clobber>
+            <compress>false</compress>
+            <locked>false</locked>
+            <modtime>false</modtime>
+            <rmdir>false</rmdir>
+            <streamName>KIRK_P4_STREAM</streamName>
+            <line>LOCAL</line>
+            <view></view>
+            <type>WRITABLE</type>
+            <serverID></serverID>
+            <backup>false</backup>
+            </spec>
+        </workspace>
+        <populate class="org.jenkinsci.plugins.p4.populate.AutoCleanImpl">
+            <have>true</have>
+            <force>false</force>
+            <modtime>false</modtime>
+            <quiet>true</quiet>
+            <pin></pin>
+            <parallel>
+            <enable>false</enable>
+            <threads>4</threads>
+            <minfiles>1</minfiles>
+            <minbytes>1024</minbytes>
+            </parallel>
+            <replace>true</replace>
+            <delete>true</delete>
+            <tidy>false</tidy>
+        </populate>
+        </scm>
+        <scriptPath>KIRK_SCRIPT_PATH</scriptPath>
+        <lightweight>true</lightweight>
+    </definition>
+    <triggers/>
+    <disabled>false</disabled>
+</flow-definition>
     """
 
     def build_xml(self, job):
@@ -233,23 +231,22 @@ class SandboxScriptFlow(XmlBuilder):
     Scripted flow xml generator.
     """
 
-    SEED_XML = """
-        <?xml version='1.1' encoding='UTF-8'?>
-        <flow-definition plugin="workflow-job">
-            <!-- Generics -->
-            <description>KIRK_DESCRIPTION</description>
-            <keepDependencies>false</keepDependencies>
-            <properties>
-            KIRK_PARAMETERS
-            </properties>
-            <!-- SCM pipeline setup -->
-            <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
-                <script>KIRK_SCRIPT_PATH</script>
-                <sandbox>true</sandbox>
-            </definition>
-            <triggers/>
-            <disabled>false</disabled>
-        </flow-definition>
+    SEED_XML = """<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+    <!-- Generics -->
+    <description>KIRK_DESCRIPTION</description>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+    KIRK_PARAMETERS
+    </properties>
+    <!-- SCM pipeline setup -->
+    <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+        <script>KIRK_SCRIPT_PATH</script>
+        <sandbox>true</sandbox>
+    </definition>
+    <triggers/>
+    <disabled>false</disabled>
+</flow-definition>
     """
 
     def build_xml(self, job):
