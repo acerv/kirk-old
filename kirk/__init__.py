@@ -6,6 +6,8 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 
+__version__ = "0.1"
+
 
 class KirkError(Exception):
     """

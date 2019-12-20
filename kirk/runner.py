@@ -10,6 +10,7 @@ from datetime import date
 import logging
 import jenkins
 from kirk import KirkError
+from kirk import __version__
 
 
 class Runner:
@@ -115,17 +116,27 @@ class JobRunner(Runner):
         create the xml for job parameters
         """
         xml_params = list()
+        xml_params.append("<hudson.model.ParametersDefinitionProperty>")
+        xml_params.append("<parameterDefinitions>\n")
+
+        # always add kirk version to parametrize tests
+        xml_params.append(
+            self._create_param_xml(
+                'KIRK_VERSION',
+                'Kirk version',
+                str(__version__))
+        )
+
         if params:
-            xml_params.append("<hudson.model.ParametersDefinitionProperty>")
-            xml_params.append("<parameterDefinitions>\n")
             for param in params:
                 xml = self._create_param_xml(
                     param.name,
                     param.label,
                     param.value)
                 xml_params.append(xml)
-            xml_params.append("</parameterDefinitions>")
-            xml_params.append("</hudson.model.ParametersDefinitionProperty>")
+
+        xml_params.append("</parameterDefinitions>")
+        xml_params.append("</hudson.model.ParametersDefinitionProperty>")
 
         return '\n'.join(xml_params)
 
