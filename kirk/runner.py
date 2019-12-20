@@ -7,7 +7,6 @@
 import logging
 import jenkins
 import kirk.workflow
-from kirk import __version__
 
 
 class Runner:
