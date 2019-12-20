@@ -146,6 +146,7 @@ class PerforceSCMFlow(XmlBuilder):
     """
     Perforce SCM flow xml generator.
     """
+
     SEED_XML = """
         <?xml version='1.1' encoding='UTF-8'?>
         <flow-definition plugin="workflow-job">
@@ -231,6 +232,7 @@ class SandboxScriptFlow(XmlBuilder):
     """
     Scripted flow xml generator.
     """
+
     SEED_XML = """
         <?xml version='1.1' encoding='UTF-8'?>
         <flow-definition plugin="workflow-job">

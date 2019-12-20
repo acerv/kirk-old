@@ -60,7 +60,7 @@ class JobRunner(Runner):
         """
         Open a connection with Jenkins server.
         """
-        self._logger.info("getting kirk credentials")
+        self._logger.info("getting '%s' credentials", self._owner)
         password = self._credentials.get_password(job.server, self._owner)
 
         self._logger.info("connecting to '%s'", job.server)
