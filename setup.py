@@ -13,7 +13,7 @@ setup(
     description='Jenkins Remote Launcher',
     author='Andrea Cervesato',
     author_email='andrea.cervesato@mailbox.org',
-    license='GPLv2',
+    license='LGPLv2',
     url='https://github.com/acerv/kirk',
     classifiers=[
         'Natural Language :: English',

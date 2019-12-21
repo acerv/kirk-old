@@ -2,7 +2,6 @@
 .. module:: credentials
    :platform: Multiplatform
    :synopsis: module handling credentials
-   :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 from keyrings.alt.file import PlaintextKeyring

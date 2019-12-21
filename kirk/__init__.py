@@ -2,7 +2,6 @@
 .. module:: __init__
    :platform: Multiplatform
    :synopsis: kirk initialization module
-   :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 

@@ -2,7 +2,6 @@
 .. module:: project
    :platform: Multiplatform
    :synopsis: project handling module
-   :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
