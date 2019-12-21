@@ -2,6 +2,7 @@
 TODO
 ====
 
+- [ ] jobs dependences handling
 - [ ] check minimum jenkins dependences
 - [ ] more robust keyrings configuration
 - [ ] create gui
