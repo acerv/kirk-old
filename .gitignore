@@ -3,3 +3,6 @@
 kirk.egg-info
 __pycache__
 htmlcov
+projects
+credentials.cfg
+.coverage
