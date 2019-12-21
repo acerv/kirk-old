@@ -232,7 +232,7 @@ def test_get_project_regexp(tmp_path):
     assert filtered[0].name == "test_name0"
 
 
-def test_get_project_regexp_errors(tmp_path):
+def test_get_project_regexp_errors():
     """
     Test get_project_regexp when errors are thrown
     """

@@ -66,6 +66,7 @@ def test_runner_run(tmp_path, mocker):
         mocker.patch('jenkins.Jenkins.create_job')  # cannot test xml
         mocker.patch('jenkins.Jenkins.reconfig_job')  # cannot test xml
         mocker.patch('jenkins.Jenkins.build_job')
+        mocker.patch('jenkins.Jenkins.get_job_info')
 
         # test with existing jobs
         mocker.patch('jenkins.Jenkins.job_exists', return_value=True)
@@ -94,12 +95,16 @@ def test_runner_run(tmp_path, mocker):
                 KIRK_VERSION=__version__,
                 MY_PARAM='ABC'
             ))
+        jenkins.Jenkins.get_job_info.assert_any_call(
+            "myProject/test_name0")
         jenkins.Jenkins.build_job.assert_any_call(
             "myProject/dev/admin/test_name0",
             parameters=dict(
                 KIRK_VERSION=__version__,
                 MY_PARAM='ABC'
             ))
+        jenkins.Jenkins.get_job_info.assert_any_call(
+            "myProject/dev/admin/test_name0")
 
     # test with jobs that does NOT exist
     if MOCKED:

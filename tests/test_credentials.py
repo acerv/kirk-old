@@ -21,7 +21,7 @@ class TestPlaintextCredentials:
         self._credentials = tmp_path / "credentials.cfg"
 
     @pytest.fixture(autouse=True)
-    def teardown(self, tmp_path):
+    def teardown(self):
         """
         Test teardown
         """

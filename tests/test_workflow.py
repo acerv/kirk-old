@@ -1,10 +1,9 @@
 """
 workflow module tests.
 """
-import pytest
+import xml.etree.ElementTree as ET
 import kirk.workflow
 from kirk.project import Project
-import xml.etree.ElementTree as ET
 
 
 def test_gitflow(tmp_path):
