@@ -9,6 +9,7 @@ import os
 import traceback
 import click
 import kirk.utils
+from kirk import __version__
 from kirk.runner import JobRunner
 from kirk.credentials import PlaintextCredentials
 from kirk.tokenizer import JobTokenizer
@@ -39,7 +40,7 @@ def load_jobs(folder):
     try:
         jobs = kirk.utils.get_jobs_from_folder(folder)
         click.secho("collected %d jobs\n" %
-                    len(jobs), fg="white", bold=True)
+                    len(jobs), fg="green", bold=True)
     except Exception as err:
         click.secho("ERROR: %s" % err, fg="red", bold=True, err=True)
 
@@ -68,27 +69,29 @@ def client(args, credentials, projects, debug, owner):
     """
     Kirk - Jenkins remote tester
     """
+    # start session
+    if debug:
+        click.secho("debugging session\n", fg="green", bold=True)
+
+    click.secho("kirk %s session started\n" %
+                __version__, fg="yellow", bold=True)
+    click.echo("owner: %s" % owner)
+    click.echo("rootdir: %s" % args.rootdir)
+    click.echo("projects: %s" % projects)
+    click.echo("credentials: %s" % credentials)
+    click.echo()
+
     # initialize configurations
     args.jobs = load_jobs(projects)
     args.debug = debug
     args.credentials_hdl = PlaintextCredentials(credentials)
     args.runner = JobRunner(args.credentials_hdl, owner=owner)
 
-    # start session
-    if debug:
-        click.secho("debugging session\n", fg="green", bold=True)
-
-    click.echo("session started")
-    click.echo("owner: %s" % owner)
-    click.echo("rootdir: %s" % args.rootdir)
-    click.echo("credentials: %s, projects: %s" % (credentials, projects))
-    click.echo()
-
 
 @client.command()
 @pass_arguments
 @click.option('-j', '--jobs', is_flag=True, default=False, help="list the available of jobs")
-@click.option('-p', '--projects', is_flag=True, default=False, help="list the available projects")
+@click.option('-p', '--projects', is_flag=True, default=True, help="list the available projects")
 @click.argument("job_repr", required=False, default=None, nargs=1)
 def show(args, jobs, projects, job_repr):
     """
@@ -109,11 +112,7 @@ def show(args, jobs, projects, job_repr):
 
         click.secho("available jobs", fg="white", bold=True)
         for job in args.jobs:
-            click.echo("  %s" % str(job))
-            if job.parameters:
-                for param in job.parameters:
-                    click.echo("  - %s" % str(param))
-                click.echo()
+            click.echo("  %s" % repr(job))
     elif projects:
         proj_list = load_projects(args.jobs)
         if not proj_list:
@@ -123,8 +122,15 @@ def show(args, jobs, projects, job_repr):
         for project in proj_list:
             click.echo("  %s" % project.name)
             for job in project.jobs:
-                click.echo("   - %s" % job.name)
+                click.echo("   - %s" % repr(job))
             click.echo()
+    elif jobs:
+        if not args.jobs:
+            return
+
+        click.secho("available jobs", fg="white", bold=True)
+        for job in args.jobs:
+            click.echo("  %s" % repr(job))
 
 
 @client.command()

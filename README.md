@@ -2,7 +2,7 @@
 TODO
 ====
 
-- [ ] show parameters according with the 'show' flag
+- [x] show parameters according with the 'show' flag
 - [x] split Yaml extension into a module
 - [x] jenkins job xml builder module
 - [x] split scm configurations

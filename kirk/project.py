@@ -149,7 +149,8 @@ class JobItem:
     def __repr__(self):
         params = dict()
         for param in self.parameters:
-            params[param.name] = param.value
+            if param.show:
+                params[param.name] = param.value
 
         return self._tokenizer.encode(
             self.project.name,
