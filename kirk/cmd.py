@@ -90,19 +90,14 @@ def client(args, credentials, projects, debug, owner):
 @client.command()
 @pass_arguments
 @click.option('-j', '--jobs', is_flag=True, default=False, help="list the available of jobs")
-@click.option('-p', '--projects', is_flag=True, default=True, help="list the available projects")
 @click.argument("job_repr", required=False, default=None, nargs=1)
-def show(args, jobs, projects, job_repr):
+def show(args, jobs, job_repr):
     """
     show informations about available projects or jobs
 
-    To show jobs (default behaviour):
+    To show jobs only:
 
         kirk show --jobs
-
-    To show projects:
-
-        kirk show --projects
 
     """
     if jobs:
@@ -112,7 +107,7 @@ def show(args, jobs, projects, job_repr):
         click.secho("available jobs", fg="white", bold=True)
         for job in args.jobs:
             click.echo("  %s" % repr(job))
-    elif projects:
+    else:
         proj_list = load_projects(args.jobs)
         if not proj_list:
             return
@@ -123,13 +118,6 @@ def show(args, jobs, projects, job_repr):
             for job in project.jobs:
                 click.echo("   - %s" % repr(job))
             click.echo()
-    elif jobs:
-        if not args.jobs:
-            return
-
-        click.secho("available jobs", fg="white", bold=True)
-        for job in args.jobs:
-            click.echo("  %s" % repr(job))
 
 
 @client.command()
@@ -155,7 +143,7 @@ def search(args, regexp):
         else:
             click.secho("found jobs", fg="white", bold=True)
             for job in found:
-                click.echo("  %s" % str(job))
+                click.echo("  %s" % repr(job))
     except Exception as err:
         click.secho("ERROR: %s" % str(err), fg="red")
         if args.debug:
@@ -236,24 +224,24 @@ def run(args, jobs_repr, user):
 
 @client.command()
 @pass_arguments
-@click.argument("credential", nargs=2)
+@click.argument("credential", nargs=3)
 def credential(args, credential):
     """
     add a new user inside credentials file
 
     Usage:
 
-        kirk credential <myurl> <myuser>
+        kirk credential <myurl> <myuser> <mypassword>
 
     """
     url = credential[0]
     user = credential[1]
+    password = credential[2]
 
     click.secho("saving credential:", fg="white", bold=True)
     click.echo("  url:  %s" % url)
     click.echo("  user: %s" % user)
-
-    password = click.prompt("  type your password", hide_input=True)
+    click.echo("  password: ******")
 
     args.credentials_hdl.set_password(url, user, password)
 
