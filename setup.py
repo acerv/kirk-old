@@ -2,7 +2,6 @@
 .. module:: setup
    :platform: Multiplatform
    :synopsis: installer module
-   :license: GPLv2
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 from setuptools import setup, find_packages
@@ -15,7 +14,6 @@ setup(
     author='Andrea Cervesato',
     author_email='andrea.cervesato@mailbox.org',
     license='GPLv2',
-    scripts=['kirk/main.py'],
     url='https://github.com/acerv/kirk',
     classifiers=[
         'Natural Language :: English',
@@ -26,22 +24,19 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Topic :: Software Development :: Testing',
     ],
-    packages=find_packages(),
     install_requires=[
         'python-jenkins',
         'pyyaml',
         'pykwalify',
-        'click',
+        'keyring',
         'keyrings.alt',
+        'click',
+        'colorama',
     ],
-    tests_require=[
-        'pytest',
-        'pytest-mock'
-    ],
-    test_suite="tests",
+    packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'kirk=kirk.main:client',
+            'kirk=cmd.main:client',
         ],
     },
 )

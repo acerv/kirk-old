@@ -76,6 +76,18 @@ map:
                 required: false
                 type: str
 
+          # script configuration
+          none:
+            required: false
+            map:
+              script:
+                required: true
+                type: str
+              sandbox:
+                default: true
+                required: false
+                type: bool
+
       # default parameters which are shared along with all
       # jenkins jobs parameters and it can be overritten
       # by them
@@ -118,7 +130,7 @@ map:
 
           # pipeline script to be executed by this job
           pipeline:
-            required: true
+            required: false
             type: str
 
           # url of the jenkins server

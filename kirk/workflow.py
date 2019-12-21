@@ -225,7 +225,7 @@ class PerforceSCMFlow(XmlBuilder):
         return seed_xml
 
 
-class SandboxScriptFlow(XmlBuilder):
+class ScriptFlow(XmlBuilder):
     """
     Scripted flow xml generator.
     """
@@ -241,7 +241,7 @@ class SandboxScriptFlow(XmlBuilder):
     <!-- SCM pipeline setup -->
     <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
         <script>KIRK_SCRIPT_PATH</script>
-        <sandbox>true</sandbox>
+        <sandbox>KIRK_SCRIPT_SANDBOX</sandbox>
     </definition>
     <triggers/>
     <disabled>false</disabled>
@@ -249,13 +249,20 @@ class SandboxScriptFlow(XmlBuilder):
     """
 
     def build_xml(self, job):
-        if job.scm:
+        if job.scm is None or 'none' not in job.scm:
             return None
 
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
-        params["KIRK_SCRIPT_PATH"] = job.pipeline
         params['KIRK_PARAMETERS'] = self._create_params_xml(job)
+        params["KIRK_SCRIPT_PATH"] = ""
+        if 'none' in job.scm:
+            params["KIRK_SCRIPT_PATH"] = job.scm['none']['script']
+            sandbox = job.scm['none'].get('sandbox', '')
+            if sandbox:
+                params["KIRK_SCRIPT_SANDBOX"] = 'true'
+            else:
+                params["KIRK_SCRIPT_SANDBOX"] = 'false'
 
         seed_xml = self._replace_xml_params(self.SEED_XML, params)
         return seed_xml
@@ -265,7 +272,7 @@ class SandboxScriptFlow(XmlBuilder):
 BUILDERS = [
     GitSCMFlow(),
     PerforceSCMFlow(),
-    SandboxScriptFlow()
+    ScriptFlow()
 ]
 
 
@@ -283,6 +290,6 @@ def build_xml(job):
             break
 
     if not xml:
-        raise KirkError("Unsupported SCM configuration:\n" % str(job.scm))
+        raise KirkError("Unsupported SCM configuration:\n%s" % str(job.scm))
 
     return xml

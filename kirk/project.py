@@ -91,7 +91,7 @@ class JobItem:
         self._name = job_cfg['name']
 
         # pipeline of the job
-        self._pipeline = job_cfg['pipeline']
+        self._pipeline = job_cfg.get('pipeline', '')
 
         # scm of the job
         self._scm = defaults_cfg.get('scm', None)
@@ -241,7 +241,7 @@ class Project:
 
         try:
             currdir = os.path.abspath(os.path.dirname(__file__))
-            schemafile = os.path.join(currdir, "files", "schema.yml")
+            schemafile = os.path.join(currdir, "schema.yml")
             validator = Core(source_data=file_def, schema_files=[schemafile])
             validator.validate(raise_exception=True)
         except PyKwalifyException as err:

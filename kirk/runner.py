@@ -115,7 +115,7 @@ class JobRunner(Runner):
 
     def run(self, job, user=None, dev_folder="dev"):
         if not job:
-            raise ValueError("job is None")
+            raise ValueError("job is empty")
 
         if not dev_folder:
             raise ValueError("dev_folder is empty")

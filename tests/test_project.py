@@ -268,6 +268,11 @@ def test_project_param_value(tmp_path):
     assert jobs[0].parameters[0].default == "test_something_0"
     assert jobs[0].parameters[0].show == False
     assert jobs[0].parameters[0].value == "test_something_0"
+    assert str(jobs[0].parameters[0]) == "JK_TEST_0=test_something_0"
+
+    # check assignment
+    jobs[0].parameters[0].value = "test"
+    assert jobs[0].parameters[0].value == "test"
 
 
 def test_project_parameters(tmp_path):
@@ -311,6 +316,46 @@ def test_project_parameters(tmp_path):
         assert jobs[0].parameters[i].label == "Test name %d" % i
         assert jobs[0].parameters[i].default == "test_something_%d" % i
         assert jobs[0].parameters[i].show == False
+
+
+def test_project_parameters_equals(tmp_path):
+    """
+    Test project file with job parameters with the same name.
+    """
+    project_file = tmp_path / "project.yml"
+    project_file.write_text("""
+        name: project
+        description: my project
+        author: pippo
+        year: 3010
+        version: 1.0
+        location: myProject
+        defaults:
+            server: myserver.com
+            parameters:
+              - name: JK_TEST_0
+                label: Test name 0
+                default: test_something_0
+                show: false
+        jobs:
+            - name: test_name0
+              pipeline: pipeline.groovy
+              parameters:
+                - name: JK_TEST_0
+                  label: Test name 1
+                  default: test_something_1
+                  show: true
+    """)
+    proj = Project()
+    proj.load(str(project_file.absolute()))
+
+    jobs = proj.jobs
+    assert len(jobs[0].parameters) == 1
+    assert jobs[0].parameters[0].name == "JK_TEST_0"
+    assert jobs[0].parameters[0].label == "Test name 1"
+    assert jobs[0].parameters[0].default == "test_something_1"
+    assert jobs[0].parameters[0].show == True
+    assert jobs[0].parameters[0].value == "test_something_1"
 
 
 def test_project_override_parameter(tmp_path):
@@ -470,7 +515,7 @@ def test_project_scm_p4(tmp_path):
             server: myserver.com
             scm:
                 perforce:
-                    stream: //depot/main/...
+                    stream: //depot/main
                     changelist: 1001
                     workspace: depot_main_workspace
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
@@ -481,10 +526,38 @@ def test_project_scm_p4(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    assert proj.jobs[0].scm["perforce"]["stream"] == "//depot/main/..."
+    assert proj.jobs[0].scm["perforce"]["stream"] == "//depot/main"
     assert proj.jobs[0].scm["perforce"]["changelist"] == 1001
     assert proj.jobs[0].scm["perforce"]["workspace"] == "depot_main_workspace"
     assert proj.jobs[0].scm["perforce"]["credential"] == "fbf1e43a-3442-455e-9c7f-31421a122370"
+
+
+def test_project_scm_none(tmp_path):
+    """
+    Test project file defining perforce scm
+    """
+    project_file = tmp_path / "project.yml"
+    project_file.write_text("""
+        name: project
+        description: my project
+        author: pippo
+        year: 3010
+        version: 1.0
+        location: myProject
+        defaults:
+            server: myserver.com
+            scm:
+                none:
+                    script: node { println "hello world" }
+                    sandbox: false
+        jobs:
+            - name: test_seed1
+    """)
+    proj = Project()
+    proj.load(str(project_file.absolute()))
+
+    assert proj.jobs[0].scm["none"]["script"] == 'node { println "hello world" }'
+    assert proj.jobs[0].scm["none"]["sandbox"] == False
 
 
 def test_project_env_var(tmp_path):
@@ -503,7 +576,7 @@ def test_project_env_var(tmp_path):
             server: myserver.com
             scm:
                 perforce:
-                    stream: //depot/main/...
+                    stream: //depot/main
                     changelist: 1001
                     workspace: depot_main_${NODE}_${JOBNAME}
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
