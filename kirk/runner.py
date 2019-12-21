@@ -120,6 +120,8 @@ class JobRunner(Runner):
         if not dev_folder:
             raise ValueError("dev_folder is empty")
 
+        url = ""
+
         self._server = self._open_connection(job)
         try:
             proj_folder = None
@@ -138,8 +140,11 @@ class JobRunner(Runner):
                 params[param.name] = param.value
 
             self._server.build_job(seed_location, parameters=params)
+
+            # get seed build url
+            job_info = self._server.get_job_info(seed_location)
+            url = job_info["url"] + ("%s/" % str(job_info["nextBuildNumber"]))
         finally:
             del self._server
 
-        url = job.server + "/" + seed_location
         return url
