@@ -1,5 +1,5 @@
 """
-.. module:: tester
+.. module:: checker
    :platform: Multiplatform
    :synopsis: testing module for jenkins server
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
