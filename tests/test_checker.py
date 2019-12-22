@@ -4,8 +4,8 @@ test checker module
 import os
 import yaml
 import jenkins
-from kirk.checker import __kirk_check
-from kirk.checker import JenkinsTester
+from click.testing import CliRunner
+import kirk.checker
 
 
 def test_kirk_check(mocker):
@@ -55,7 +55,15 @@ def test_kirk_check(mocker):
         "password"
     ]
 
-    __kirk_check(args)
+    runner = CliRunner()
+    runner.invoke(
+        kirk.checker.kirk_check,
+        [
+            'http://localhost:8080',
+            'admin',
+            'password'
+        ]
+    )
 
     # check if methods are called
     jenkins.Jenkins.__init__.assert_any_call(
@@ -65,7 +73,8 @@ def test_kirk_check(mocker):
     jenkins.Jenkins.get_whoami.assert_any_call()
     jenkins.Jenkins.get_plugins_info.assert_any_call()
     jenkins.Jenkins.create_job.assert_called()
-    jenkins.Jenkins.get_job_info.assert_any_call(JenkinsTester.TEST_JOB)
+    jenkins.Jenkins.get_job_info.assert_any_call(
+        kirk.checker.JenkinsTester.TEST_JOB)
     jenkins.Jenkins.reconfig_job.assert_called()
     jenkins.Jenkins.build_job.assert_called()
     jenkins.Jenkins.delete_job.assert_called()
