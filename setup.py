@@ -37,8 +37,9 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'kirk=kirk.cmd:client',
-            'kirk-check=kirk.checker:kirk_check',
+            'kirk=kirk.commands:command_kirk',
+            'kirk-check=kirk.commands:command_check',
+            'kirk-credential=kirk.commands:command_credential',
         ],
     },
 )

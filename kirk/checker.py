@@ -9,7 +9,6 @@ import time
 import xml.dom.minidom
 import yaml
 import jenkins
-import click
 from kirk import KirkError
 
 
@@ -222,7 +221,7 @@ class JenkinsTester:
                 last_build = job_info['lastCompletedBuild']
                 if last_build and 'number' in last_build:
                     break
-                time.sleep(0.3)
+                time.sleep(0.1)
         except jenkins.JenkinsException as err:
             raise KirkError(err)
 
@@ -234,48 +233,3 @@ class JenkinsTester:
             self._server.delete_job(self.TEST_JOB)
         except jenkins.JenkinsException as err:
             raise KirkError(err)
-
-
-@click.command()
-@click.argument("args", nargs=3)
-def kirk_check(args):
-    """
-    Checks if requisites to run kirk are satisfied.
-    Usage:
-
-        kirk-check <url> <user> <token>
-
-    """
-    url = args[0]
-    user = args[1]
-    password = args[2]
-
-    tester = JenkinsTester(url, user, password)
-    tests = {
-        'connection test': tester.test_connection,
-        'plugins installed': tester.test_plugins,
-        'create job': tester.test_job_create,
-        'configure job': tester.test_job_config,
-        'fetching job info': tester.test_job_info,
-        'build job': tester.test_job_build,
-        'delete job': tester.test_job_delete,
-    }
-
-    click.secho("kirk-check session started\n", fg='yellow', bold=True)
-    click.echo("url: %s" % url)
-    click.echo("user: %s" % user)
-    click.echo("password: %s\n" % password)
-
-    try:
-        length = len(tests)
-        index = 0
-
-        for msg, test in tests.items():
-            index += 1
-            click.echo("  %d/%d   %s" % (index, length, msg), nl=False)
-            test()
-            time.sleep(0.2)
-            click.secho("  PASSED", fg="green")
-    except KirkError as err:
-        click.secho("  FAILED", fg="red")
-        click.secho(str(err), fg="red")

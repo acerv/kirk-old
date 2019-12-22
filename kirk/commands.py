@@ -5,13 +5,16 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
+import time
 import traceback
 import click
 import kirk.utils
 from kirk import __version__
+from kirk import KirkError
 from kirk.runner import JobRunner
 from kirk.credentials import PlaintextCredentials
 from kirk.tokenizer import JobTokenizer
+from kirk.checker import JenkinsTester
 
 
 class Arguments:
@@ -22,13 +25,22 @@ class Arguments:
     def __init__(self):
         self.credentials = "credentials.cfg"
         self.rootdir = os.path.abspath(os.path.curdir)
-        self.credentials_hdl = None
         self.runner = None
         self.jobs = None
         self.debug = False
 
 
 pass_arguments = click.make_pass_decorator(Arguments, ensure=True)
+
+
+def print_error(err, debug):
+    """
+    Print an error message
+    """
+    click.secho("%s" % err, fg="red", bold=True, err=True)
+    if debug:
+        msg = traceback.format_exc()
+        click.secho(msg, fg="red", err=True)
 
 
 def load_jobs(folder):
@@ -41,7 +53,7 @@ def load_jobs(folder):
         click.secho("collected %d jobs\n" %
                     len(jobs), fg="green", bold=True)
     except Exception as err:
-        click.secho("ERROR: %s" % err, fg="red", bold=True, err=True)
+        print_error(err, True)
 
     return jobs
 
@@ -64,7 +76,7 @@ def load_projects(jobs):
 @click.option('-d', '--debug', is_flag=True, default=False, help="debug mode")
 @click.option('-o', '--owner', required=False, nargs=1, default='kirk', help="main user")
 @pass_arguments
-def client(args, credentials, projects, debug, owner):
+def command_kirk(args, credentials, projects, debug, owner):
     """
     Kirk - Jenkins remote tester
     """
@@ -77,17 +89,17 @@ def client(args, credentials, projects, debug, owner):
     click.echo("owner: %s" % owner)
     click.echo("rootdir: %s" % args.rootdir)
     click.echo("projects: %s" % projects)
-    click.echo("credentials: %s" % credentials)
-    click.echo()
+    click.echo("credentials: %s\n" % credentials)
 
     # initialize configurations
     args.jobs = load_jobs(projects)
     args.debug = debug
-    args.credentials_hdl = PlaintextCredentials(credentials)
-    args.runner = JobRunner(args.credentials_hdl, owner=owner)
+
+    credentials_hdl = PlaintextCredentials(credentials)
+    args.runner = JobRunner(credentials_hdl, owner=owner)
 
 
-@client.command(name='list')
+@command_kirk.command(name='list')
 @pass_arguments
 @click.option('-j', '--jobs', is_flag=True, default=False, help="list the available of jobs")
 @click.argument("job_repr", required=False, default=None, nargs=1)
@@ -120,7 +132,7 @@ def show(args, jobs, job_repr):
             click.echo()
 
 
-@client.command()
+@command_kirk.command()
 @pass_arguments
 @click.argument("regexp", nargs=1)
 def search(args, regexp):
@@ -145,13 +157,10 @@ def search(args, regexp):
             for job in found:
                 click.echo("  %s" % repr(job))
     except Exception as err:
-        click.secho("ERROR: %s" % str(err), fg="red")
-        if args.debug:
-            msg = traceback.format_exc()
-            click.secho(msg, fg="red", err=True)
+        print_error(err, args.debug)
 
 
-@client.command()
+@command_kirk.command()
 @pass_arguments
 @click.option('-u', '--user', default="", type=str, help="Jenkins username")
 @click.argument("jobs_repr", nargs=-1)
@@ -206,7 +215,7 @@ def run(args, jobs_repr, user):
         for job_str in not_available:
             click.echo("  %s" % job_str)
 
-        click.echo("\nplease use 'show' command to list available jobs")
+        click.echo("\nplease use 'list' command to show available jobs")
         return
 
     try:
@@ -216,34 +225,79 @@ def run(args, jobs_repr, user):
             job_location = args.runner.run(job, user)
             click.secho("-> configured %s" % job_location, fg="green")
     except Exception as err:
-        click.secho(str(err), fg="red", err=True)
-        if args.debug:
-            msg = traceback.format_exc()
-            click.secho(msg, fg="red", err=True)
+        print_error(err, args.debug)
 
 
-@client.command()
-@pass_arguments
-@click.argument("credential", nargs=3)
-def credential(args, credential):
+@click.command()
+@click.argument("args", nargs=2)
+@click.option('-c', '--credentials', default="credentials.cfg", help="credentials file location")
+def command_credential(args, credentials):
     """
-    add a new user inside credentials file
+    Add new credentials inside the credentials file.
 
     Usage:
 
-        kirk credential <myurl> <myuser> <mypassword>
+        kirk-credential <url> <user>
 
     """
-    url = credential[0]
-    user = credential[1]
-    password = credential[2]
+    url = args[0]
+    user = args[1]
 
     click.secho("saving credential:", fg="white", bold=True)
     click.echo("  url:  %s" % url)
     click.echo("  user: %s" % user)
-    click.echo("  password: ******")
+    token = click.prompt("  password", hide_input=True)
 
-    args.credentials_hdl.set_password(url, user, password)
+    try:
+        handler = PlaintextCredentials(credentials)
+        handler.set_password(url, user, token)
+    except Exception as err:
+        print_error(err, True)
 
     click.echo()
     click.secho("credential saved", fg="green")
+
+
+@click.command()
+@click.argument("args", nargs=3)
+def command_check(args):
+    """
+    Checks if requisites to run kirk are satisfied.
+    Usage:
+
+        kirk-check <url> <user> <token>
+
+    """
+    url = args[0]
+    user = args[1]
+    password = args[2]
+
+    tester = JenkinsTester(url, user, password)
+    tests = {
+        'connection test': tester.test_connection,
+        'plugins installed': tester.test_plugins,
+        'create job': tester.test_job_create,
+        'configure job': tester.test_job_config,
+        'fetching job info': tester.test_job_info,
+        'build job': tester.test_job_build,
+        'delete job': tester.test_job_delete,
+    }
+
+    click.secho("kirk-check session started\n", fg='yellow', bold=True)
+    click.echo("  url: %s" % url)
+    click.echo("  user: %s" % user)
+    click.echo("  password: *******\n")
+
+    try:
+        length = len(tests)
+        index = 0
+
+        for msg, test in tests.items():
+            index += 1
+            click.echo("  %d/%d   %s" % (index, length, msg), nl=False)
+            test()
+            time.sleep(0.2)
+            click.secho("  PASSED", fg="green")
+    except KirkError as err:
+        click.secho("  FAILED", fg="red")
+        print_error(err, True)
