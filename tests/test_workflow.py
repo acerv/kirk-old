@@ -75,6 +75,13 @@ def test_scriptflow(tmp_path):
     """
     Test ScriptFlow implementation
     """
+    script_file = tmp_path / "script.groovy"
+    script_file.write_text("""
+    node
+    {
+        println "hello world"
+    }
+    """)
     project_file = tmp_path / "project.yml"
     project_file.write_text("""
         name: project
@@ -87,10 +94,10 @@ def test_scriptflow(tmp_path):
             server: myserver.com
             scm:
                 none:
-                    script: node { println "hello world" }
+                    script: %s
         jobs:
             - name: test_seed1
-    """)
+    """ % script_file.absolute())
     proj = Project()
     proj.load(str(project_file.absolute()))
 
