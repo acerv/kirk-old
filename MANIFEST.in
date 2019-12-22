@@ -1,2 +1,2 @@
-kirk/schema.yml
-kirk/defaults.yml
+include kirk/files/schema.yml
+include kirk/files/defaults.yml
