@@ -226,7 +226,7 @@ class JenkinsTester:
         except jenkins.JenkinsException as err:
             raise KirkError(err)
 
-    def _test_job_delete(self):
+    def test_job_delete(self):
         """
         check for job delete
         """
@@ -258,7 +258,7 @@ def kirk_check(args):
         'configure job': tester.test_job_config,
         'fetching job info': tester.test_job_info,
         'build job': tester.test_job_build,
-        'delete job': tester._test_job_delete,
+        'delete job': tester.test_job_delete,
     }
 
     click.secho("kirk-check session started\n", fg='yellow', bold=True)
