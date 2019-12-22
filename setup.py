@@ -33,7 +33,7 @@ setup(
         'click',
         'colorama',
     ],
-    packages=find_packages(),
+    packages=['kirk'],
     include_package_data=True,
     entry_points={
         'console_scripts': [
