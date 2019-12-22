@@ -3,7 +3,7 @@ TODO
 ====
 
 - [ ] jobs dependences handling
-- [ ] check minimum jenkins dependences
+- [x] check minimum jenkins dependences
 - [ ] more robust keyrings configuration
 - [ ] create gui
 - [x] show parameters according with the 'show' flag

@@ -241,7 +241,7 @@ class Project:
 
         try:
             currdir = os.path.abspath(os.path.dirname(__file__))
-            schemafile = os.path.join(currdir, "schema.yml")
+            schemafile = os.path.join(currdir, "files", "schema.yml")
             validator = Core(source_data=file_def, schema_files=[schemafile])
             validator.validate(raise_exception=True)
         except PyKwalifyException as err:

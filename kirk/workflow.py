@@ -155,7 +155,7 @@ class PerforceSCMFlow(XmlBuilder):
             <properties>
             KIRK_PARAMETERS
             </properties>
-                <!-- SCM pipeline setup -->
+            <!-- SCM pipeline setup -->
             <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
                 <scm class="org.jenkinsci.plugins.p4.PerforceScm" plugin="p4">
                 <credential>KIRK_P4_CREDENTIAL</credential>

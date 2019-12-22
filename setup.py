@@ -37,6 +37,7 @@ setup(
     entry_points={
         'console_scripts': [
             'kirk=kirk.cmd:client',
+            'kirk-check=kirk.tester:kirk_check',
         ],
     },
 )
