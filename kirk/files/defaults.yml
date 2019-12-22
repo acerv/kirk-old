@@ -1,0 +1,20 @@
+# default kirk configuration file
+
+kirk:
+  # minimum jenkins setup
+  jenkins:
+    # plugins must be installed in order to work with kirk.
+    # Some of them might be optional, since default behaviour is
+    # running groovy scripts without SCM
+    plugins:
+      - name: workflow-job
+        optional: false
+
+      - name: workflow-cps
+        optional: false
+
+      - name: git
+        optional: true
+
+      - name: p4
+        optional: true

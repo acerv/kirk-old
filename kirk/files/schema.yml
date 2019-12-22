@@ -1,0 +1,181 @@
+# configuration files validation schema
+
+map:
+  # name of the project
+  name:
+    required: true
+    type: str
+
+  # description of the project file
+  description:
+    required: true
+    type: str
+
+  # year of the project file
+  year:
+    required: true
+    type: int
+
+  # author of the project file
+  author:
+    required: true
+    type: str
+
+  # version of the project file
+  version:
+    required: true
+    type: float
+
+  # location of the project inside the Jenkins server
+  location:
+    required: true
+    type: str
+
+  # general defaults that are shared with jobs
+  defaults:
+    required: true
+    map:
+      # default jenkins server which can be overwritten
+      # by jobs definitions
+      server:
+        required: true
+        type: str
+
+      # scm configuration used to fetch Jenkinsfile
+      scm:
+        required: false
+        map:
+          # p4 configuration
+          perforce:
+            required: false
+            map:
+              stream:
+                required: true
+                type: str
+              changelist:
+                required: true
+                type: int
+              workspace:
+                required: true
+                type: str
+              credential:
+                required: true
+                type: str
+
+          # git configuration
+          git:
+            required: false
+            map:
+              url:
+                required: true
+                type: str
+              checkout:
+                required: true
+                type: str
+              credential:
+                required: false
+                type: str
+
+          # script configuration
+          none:
+            required: false
+            map:
+              script:
+                required: true
+                type: str
+              sandbox:
+                default: true
+                required: false
+                type: bool
+
+      # default parameters which are shared along with all
+      # jenkins jobs parameters and it can be overritten
+      # by them
+      parameters:
+        required: false
+        seq:
+          - map:
+              # name of the jenkins parameters as it
+              # is defined in the jenkins job
+              name:
+                required: true
+                type: str
+                pattern: (.+[_]?)+
+
+              # label used in the UI
+              label:
+                required: true
+                type: str
+
+              # default value of the parameter
+              default:
+                required: false
+                type: str
+
+              # tell if parameter must be shown in the UI
+              show:
+                required: false
+                type: bool
+
+  # jenkins jobs list
+  jobs:
+    required: true
+    seq:
+      - map:
+          # name of the job
+          name:
+            required: true
+            type: str
+            pattern: (.+[_]?)+
+
+          # pipeline script to be executed by this job
+          pipeline:
+            required: false
+            type: str
+
+          # url of the jenkins server
+          # i.e. "jenkins.mycompany.org:8080"
+          server:
+            required: false
+            type: str
+
+          # parameters of the jenkins job
+          # This is needed in order to customize the user interface
+          # with needed parameters and it will override the default
+          # parameters defined inside defaults section
+          parameters:
+            required: false
+            seq:
+              - map:
+                  # name of the jenkins parameters as it
+                  # is defined in the jenkins job
+                  name:
+                    required: true
+                    type: str
+                    pattern: (.+[_]?)+
+
+                  # label used in the UI
+                  label:
+                    required: true
+                    type: str
+
+                  # default value of the parameter
+                  default:
+                    required: false
+                    type: str
+
+                  # tell if parameter must be shown in the UI
+                  show:
+                    required: false
+                    type: bool
+
+          # list of jenkins job names dependences
+          # i.e.
+          #   - 'Test_Pipeline1'
+          #   - 'Test_Pipeline2'
+          #   - 'Test_Pipeline3'
+          depends:
+            required: false
+            type: seq
+            sequence:
+              - type: str
