@@ -5,6 +5,7 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
+import time
 import xml.dom.minidom
 import yaml
 import jenkins
@@ -65,7 +66,7 @@ class JenkinsTester:
     Implementation of Tester using python-jenkins api.
     """
 
-    TEST_JOB = "kirk_test_job"
+    TEST_JOB = "__kirk_delete_me"
 
     def __init__(self, url, username, password):
         """
@@ -150,12 +151,8 @@ class JenkinsTester:
             <flow-definition plugin="workflow-job">
                 <description>Testing job for kirk-check command</description>
                 <keepDependencies>false</keepDependencies>
-                <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
-                    <script>
-                    node {
-                        println "hello pippo"
-                    }
-                    </script>
+                <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+                    <script></script>
                     <sandbox>true</sandbox>
                 </definition>
                 <triggers/>
@@ -188,12 +185,8 @@ class JenkinsTester:
                         </parameterDefinitions>
                     </hudson.model.ParametersDefinitionProperty>
                 </properties>
-                <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
-                    <script>
-                    node {
-                        println "hello ${NAME}"
-                    }
-                    </script>
+                <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+                    <script></script>
                     <sandbox>true</sandbox>
                 </definition>
                 <triggers/>
@@ -221,7 +214,15 @@ class JenkinsTester:
         """
         try:
             self._server.build_job(
-                self.TEST_JOB, parameters=dict(NAME="pluto"))
+                self.TEST_JOB,
+                parameters=dict(NAME="pluto"))
+
+            while True:
+                job_info = self._server.get_job_info(self.TEST_JOB)
+                last_build = job_info['lastCompletedBuild']
+                if last_build and 'number' in last_build:
+                    break
+                time.sleep(0.3)
         except jenkins.JenkinsException as err:
             raise KirkError(err)
 
@@ -256,7 +257,7 @@ def kirk_check(args):
         'create job': tester.test_job_create,
         'configure job': tester.test_job_config,
         'fetching job info': tester.test_job_info,
-        'build job': tester.test_job_info,
+        'build job': tester.test_job_build,
         'delete job': tester._test_job_delete,
     }
 
@@ -273,6 +274,7 @@ def kirk_check(args):
             index += 1
             click.echo("  %d/%d   %s" % (index, length, msg), nl=False)
             test()
+            time.sleep(0.2)
             click.secho("  PASSED", fg="green")
     except KirkError as err:
         click.secho("  FAILED", fg="red")

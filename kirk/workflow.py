@@ -241,8 +241,8 @@ class ScriptFlow(XmlBuilder):
             KIRK_PARAMETERS
             </properties>
             <!-- SCM pipeline setup -->
-            <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
-                <script>KIRK_SCRIPT_PATH</script>
+            <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+                <script>KIRK_SCRIPT_CODE</script>
                 <sandbox>KIRK_SCRIPT_SANDBOX</sandbox>
             </definition>
             <triggers/>
@@ -257,9 +257,15 @@ class ScriptFlow(XmlBuilder):
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
         params['KIRK_PARAMETERS'] = self._create_params_xml(job)
-        params["KIRK_SCRIPT_PATH"] = ""
+        params["KIRK_SCRIPT_CODE"] = ""
+
+        # read script data
+        script = ""
+        with open(job.scm['none']['script'], 'r') as script_txr:
+            script = script_txr.read()
+
         if 'none' in job.scm:
-            params["KIRK_SCRIPT_PATH"] = job.scm['none']['script']
+            params["KIRK_SCRIPT_CODE"] = script
             sandbox = job.scm['none'].get('sandbox', '')
             if sandbox:
                 params["KIRK_SCRIPT_SANDBOX"] = 'true'
