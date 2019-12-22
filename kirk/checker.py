@@ -236,9 +236,7 @@ class JenkinsTester:
             raise KirkError(err)
 
 
-@click.command()
-@click.argument("args", nargs=3)
-def kirk_check(args):
+def __kirk_check(args):
     """
     Checks if requisites to run kirk are satisfied.
     Usage:
@@ -279,3 +277,9 @@ def kirk_check(args):
     except KirkError as err:
         click.secho("  FAILED", fg="red")
         click.secho(str(err), fg="red")
+
+
+@click.command()
+@click.argument("args", nargs=3)
+def kirk_check(args):
+    __kirk_check(args)
