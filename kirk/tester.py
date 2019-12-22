@@ -239,7 +239,7 @@ class JenkinsTester:
 @click.argument("args", nargs=3)
 def kirk_check(args):
     """
-    Command that checks if all requisites to run kirk are satisfied.
+    Checks if requisites to run kirk are satisfied.
     Usage:
 
         kirk-check <url> <user> <token>
