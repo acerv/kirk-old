@@ -49,12 +49,6 @@ def test_kirk_check(mocker):
     mocker.patch('jenkins.Jenkins.job_exists', return_value=False)
 
     # run application
-    args = [
-        "http://localhost:8080",
-        "admin",
-        "password"
-    ]
-
     runner = CliRunner()
     runner.invoke(
         kirk.checker.kirk_check,
