@@ -87,7 +87,7 @@ def client(args, credentials, projects, debug, owner):
     args.runner = JobRunner(args.credentials_hdl, owner=owner)
 
 
-@client.command()
+@client.command(name='list')
 @pass_arguments
 @click.option('-j', '--jobs', is_flag=True, default=False, help="list the available of jobs")
 @click.argument("job_repr", required=False, default=None, nargs=1)
@@ -97,7 +97,7 @@ def show(args, jobs, job_repr):
 
     To show jobs only:
 
-        kirk show --jobs
+        kirk list --jobs
 
     """
     if jobs:
@@ -163,7 +163,7 @@ def run(args, jobs_repr, user):
 
         kirk run <myproject>::<mytest> ...
 
-    Usage, to run as user:
+    Usage, to run as user (it will create a developer folder):
 
         kirk run -u <myuser> <myproject>::<mytest> ...
 
