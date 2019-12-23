@@ -79,7 +79,10 @@ class JenkinsTester:
         self._url = url
         self._username = username
         self._password = password
-        self._server = None
+        self._server = jenkins.Jenkins(
+            self._url,
+            self._username,
+            self._password)
         self._config = None
 
         currdir = os.path.abspath(os.path.dirname(__file__))
@@ -106,11 +109,6 @@ class JenkinsTester:
         """
         username = None
         try:
-            self._server = jenkins.Jenkins(
-                self._url,
-                self._username,
-                self._password)
-
             username = self._server.get_whoami()['fullName']
         except jenkins.JenkinsException as err:
             raise KirkError(err)
