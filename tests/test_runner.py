@@ -6,7 +6,7 @@ import jenkins
 import kirk.utils
 import kirk.credentials
 from kirk.runner import JobRunner
-from kirk.credentials import PlaintextCredentials
+from kirk.credentials import CredentialsHandler
 from kirk import __version__
 
 MOCKED = True
@@ -53,7 +53,7 @@ def test_runner_run(tmp_path, mocker):
     jobs = kirk.utils.get_jobs_from_folder(str(tmp_path))
 
     # create credentials file
-    credentials = PlaintextCredentials(tmp_path / "credentials.cfg")
+    credentials = CredentialsHandler(tmp_path / "credentials.cfg")
     credentials.set_password(
         "http://localhost:8080",
         "kirk",

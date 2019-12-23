@@ -12,7 +12,7 @@ import kirk.utils
 from kirk import __version__
 from kirk import KirkError
 from kirk.runner import JobRunner
-from kirk.credentials import PlaintextCredentials
+from kirk.credentials import CredentialsHandler
 from kirk.tokenizer import JobTokenizer
 from kirk.checker import JenkinsTester
 
@@ -95,7 +95,7 @@ def command_kirk(args, credentials, projects, debug, owner):
     args.jobs = load_jobs(projects)
     args.debug = debug
 
-    credentials_hdl = PlaintextCredentials(credentials)
+    credentials_hdl = CredentialsHandler(credentials)
     args.runner = JobRunner(credentials_hdl, owner=owner)
 
 
@@ -249,7 +249,7 @@ def command_credential(args, credentials):
     token = click.prompt("  password", hide_input=True)
 
     try:
-        handler = PlaintextCredentials(credentials)
+        handler = CredentialsHandler(credentials)
         handler.set_password(url, user, token)
     except Exception as err:
         print_error(err, True)

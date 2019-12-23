@@ -36,9 +36,9 @@ class Credentials:
         raise NotImplementedError()
 
 
-class PlaintextCredentials(Credentials):
+class CredentialsHandler(Credentials):
     """
-    Save/Load credentials from a plaintext file.
+    Save/Load credentials from a file.
     """
 
     def __init__(self, file_path):

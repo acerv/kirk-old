@@ -3,12 +3,12 @@ Test credentials module
 """
 import os
 import pytest
-from kirk.credentials import PlaintextCredentials
+from kirk.credentials import CredentialsHandler
 
 
-class TestPlaintextCredentials:
+class TestCredentialsHandler:
     """
-    Test PlaintextCredentials class
+    Test CredentialsHandler class
     """
 
     _credentials = ""
@@ -33,7 +33,7 @@ class TestPlaintextCredentials:
         """
         Fixture to expose credentials handler.
         """
-        return PlaintextCredentials(self._credentials)
+        return CredentialsHandler(self._credentials)
 
     def test_password_storage(self, credentials):
         """
