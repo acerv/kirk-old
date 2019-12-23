@@ -156,6 +156,10 @@ class JobItem:
             self.name,
             params)
 
+    def __eq__(self, value):
+        # TODO: better equality
+        return str(self) == str(value)
+
     @property
     def name(self):
         """

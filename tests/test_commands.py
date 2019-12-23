@@ -134,11 +134,11 @@ def test_kirk_credential(mocker):
         )
         assert ret.exit_code == 0
 
-    kirk.credentials.CredentialsHandler.set_password.assert_any_call(
-        "http://localhost:8080",
-        "admin",
-        "password"
-    )
+        kirk.credentials.CredentialsHandler.set_password.assert_any_call(
+            "http://localhost:8080",
+            "admin",
+            "password"
+        )
 
 
 def test_kirk_run(mocker, create_projects):
@@ -155,13 +155,24 @@ def test_kirk_run(mocker, create_projects):
             [
                 'run',
                 'project_1::mytest_0',
+                '-u',
+                'admin',
                 '--change-id',
                 'develop'
             ],
         )
         assert ret.exit_code == 0
-
-    kirk.runner.JobRunner.run.assert_called_once()
+        jobs = kirk.commands.load_jobs("projects")
+        myjob = None
+        for job in jobs:
+            if str(job) == "project_1::mytest_0":
+                myjob = job
+                break
+        kirk.runner.JobRunner.run.assert_called_with(
+            myjob,
+            "admin",
+            "develop"
+        )
 
 
 def test_kirk_check(mocker):

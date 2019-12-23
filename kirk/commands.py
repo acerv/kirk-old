@@ -196,10 +196,10 @@ def run(args, jobs_repr, user, change_id):
     tokenizer = JobTokenizer()
 
     for job_str in jobs_repr:
-        _, job_name, params = tokenizer.decode(job_str)
+        project, job_name, params = tokenizer.decode(job_str)
 
         for job in args.jobs:
-            if job_name == job.name:
+            if job_name == job.name and project == job.project.name:
                 # we found the job
                 jobs_to_run[job_str] = job
                 break
@@ -227,7 +227,7 @@ def run(args, jobs_repr, user, change_id):
         # run all tests
         for job_str, job in jobs_to_run.items():
             click.secho("-> running %s (user='%s')" % (job_str, user))
-            job_location = args.runner.run(job, user=user, change_id=change_id)
+            job_location = args.runner.run(job, user, change_id)
             click.secho("-> configured %s" % job_location, fg="green")
     except KirkError as err:
         print_error(err, args.debug)
