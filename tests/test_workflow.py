@@ -31,10 +31,18 @@ def test_gitflow(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    xml = kirk.workflow.build_xml(proj.jobs[0])
+    xml_str = kirk.workflow.build_xml(proj.jobs[0], change_id="my_branch")
 
-    tree = ET.fromstring(xml)
+    tree = ET.fromstring(xml_str)
+    tags = dict()
+    for item in tree.iter():
+        tags[item.tag] = item.text
+
     assert tree is not None
+    assert "url" in tags and tags['url'] == "myurl.com/repo.git"
+    assert "credentialsId" in tags and tags['credentialsId'] == "fbf1e43a-3442-455e-9c7f-31421a122370"
+    assert "name" in tags and tags['name'] == "my_branch"
+    assert "scriptPath" in tags and tags['scriptPath'] == "pipeline.groovy"
 
 
 def test_p4flow(tmp_path):
@@ -63,10 +71,19 @@ def test_p4flow(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    xml = kirk.workflow.build_xml(proj.jobs[0])
+    xml_str = kirk.workflow.build_xml(proj.jobs[0], change_id="654321")
 
-    tree = ET.fromstring(xml)
+    tree = ET.fromstring(xml_str)
+    tags = dict()
+    for item in tree.iter():
+        tags[item.tag] = item.text
+
     assert tree is not None
+    assert "streamName" in tags and tags['streamName'] == "//depot/main"
+    assert "name" in tags and tags['name'] == "depot_main_workspace"
+    assert "credential" in tags and tags['credential'] == "fbf1e43a-3442-455e-9c7f-31421a122370"
+    assert "scriptPath" in tags and tags['scriptPath'] == "pipeline.groovy"
+    assert "shelf" in tags and tags['shelf'] == "654321"
 
 
 def test_scriptflow(tmp_path):
@@ -93,13 +110,25 @@ def test_scriptflow(tmp_path):
             scm:
                 none:
                     script: %s
+                    sandbox: false
         jobs:
             - name: test_seed1
     """ % script_file.absolute())
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    xml = kirk.workflow.build_xml(proj.jobs[0])
+    xml_str = kirk.workflow.build_xml(proj.jobs[0])
 
-    tree = ET.fromstring(xml)
+    tree = ET.fromstring(xml_str)
+    tags = dict()
+    for item in tree.iter():
+        tags[item.tag] = item.text
+
     assert tree is not None
+    assert "script" in tags and tags['script'] == """
+    node
+    {
+        println "hello world"
+    }
+    """
+    assert "sandbox" in tags and tags['sandbox'] == "false"

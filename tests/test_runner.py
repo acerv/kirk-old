@@ -74,6 +74,7 @@ def test_runner_run(tmp_path, mocker):
     runner = JobRunner(credentials)
     runner.run(jobs[0])
     runner.run(jobs[0], user="admin")
+    runner.run(jobs[0], user="admin", change_id="test")
 
     if MOCKED:
         jenkins.Jenkins.reconfig_job.assert_called()

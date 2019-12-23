@@ -16,7 +16,7 @@ class Runner:
     base class for Jenkins job runner.
     """
 
-    def run(self, job, user=None, dev_folder="dev", change_location=""):
+    def run(self, job, user=None, dev_folder="dev", change_id=""):
         """
         Run a jenkins job for the given user.
         :param job: job to run
@@ -34,10 +34,10 @@ class Runner:
 
         :param dev_folder: folder where user jobs are stored (default: 'dev')
         :type dev_folder: str
-        :param change_location: string used to recognize the location on source
-            code. For example, in git, change_location will be the commit hash
+        :param change_id: string used to recognize the location on source
+            code. For example, in git, change_id will be the commit hash
             string. In perforce it will be the number of a changelist.
-        :type change_location: str
+        :type change_id: str
         :return: url as string where job has been created
         """
         raise NotImplementedError()
@@ -99,12 +99,12 @@ class JobRunner(Runner):
 
         return dev_location
 
-    def _create_seed(self, location, job, change_location):
+    def _create_seed(self, location, job, change_id):
         """
         Create the job seed location.
         """
         # load the xml configuration according with scm
-        seed_xml = kirk.workflow.build_xml(job, change_location)
+        seed_xml = kirk.workflow.build_xml(job, change_id)
 
         # create job seed
         seed_location = "/".join([location, job.name])
@@ -118,7 +118,7 @@ class JobRunner(Runner):
 
         return seed_location
 
-    def run(self, job, user=None, dev_folder="dev", change_location=""):
+    def run(self, job, user=None, dev_folder="dev", change_id=""):
         if not job:
             raise ValueError("job is empty")
 
@@ -136,7 +136,7 @@ class JobRunner(Runner):
 
             # create seed
             seed_location = self._create_seed(
-                proj_folder, job, change_location)
+                proj_folder, job, change_id)
 
             # run seed
             params = dict(

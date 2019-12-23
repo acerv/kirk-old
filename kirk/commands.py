@@ -163,18 +163,23 @@ def search(args, regexp):
 @command_kirk.command()
 @pass_arguments
 @click.option('-u', '--user', default="", type=str, help="Jenkins username")
+@click.option('-c', '--change-id', default="", type=str, help="source code change identifier")
 @click.argument("jobs_repr", nargs=-1)
-def run(args, jobs_repr, user):
+def run(args, jobs_repr, user, change_id):
     """
     run a list of jobs
 
-    Usage, to run as owner:
+    To run jobs as owner:
 
         kirk run <myproject>::<mytest> ...
 
-    Usage, to run as user (it will create a developer folder):
+    To run jobs as user (it will create a developer folder):
 
         kirk run -u <myuser> <myproject>::<mytest> ...
+
+    To run jobs in a specific source code change:
+
+        kirk run <myproject>::<mytest> -c <change_id>
 
     """
     if not args.jobs:
@@ -222,7 +227,7 @@ def run(args, jobs_repr, user):
         # run all tests
         for job_str, job in jobs_to_run.items():
             click.secho("-> running %s (user='%s')" % (job_str, user))
-            job_location = args.runner.run(job, user)
+            job_location = args.runner.run(job, user=user, change_id=change_id)
             click.secho("-> configured %s" % job_location, fg="green")
     except KirkError as err:
         print_error(err, args.debug)
