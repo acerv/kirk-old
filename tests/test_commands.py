@@ -2,11 +2,10 @@
 Test kirk command defined in the cmd module
 """
 import os
-import yaml
 import pytest
-import jenkins
 from click.testing import CliRunner
 import kirk.commands
+import kirk.runner
 
 
 @pytest.fixture
@@ -56,7 +55,7 @@ def create_projects():
     return _callback
 
 
-def test_help():
+def test_kirk_help():
     """
     Check for --help option
     """
@@ -65,7 +64,7 @@ def test_help():
     assert ret.exit_code == 0
 
 
-def test_list_jobs(create_projects):
+def test_kirk_list_jobs(create_projects):
     """
     test for "kirk list --jobs" command
     """
@@ -80,7 +79,7 @@ def test_list_jobs(create_projects):
         assert 'project_1::mytest_1[PARAM_0=zero]' in ret.output
 
 
-def test_list_projects(create_projects):
+def test_kirk_list_projects(create_projects):
     """
     test for "kirk list" command
     """
@@ -95,15 +94,19 @@ def test_list_projects(create_projects):
         assert 'project_1::mytest_1[PARAM_0=zero]' in ret.output
 
 
-def test_search(create_projects):
+def test_kirk_search(create_projects):
     """
     test for "kirk show" command
     """
     runner = CliRunner()
     with runner.isolated_filesystem():
         create_projects()
-        ret = runner.invoke(kirk.commands.command_kirk,
-                            ['search', '.*project_1'])
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'search', '.*project_1'
+            ]
+        )
         assert ret.exit_code == 0
         assert 'project_0::mytest_0' not in ret.output
         assert 'project_0::mytest_1' not in ret.output
@@ -111,13 +114,14 @@ def test_search(create_projects):
         assert 'project_1::mytest_1[PARAM_0=zero]' in ret.output
 
 
-def test_credential(create_projects):
+def test_kirk_credential(mocker):
     """
     test for "kirk credential" command
     """
+    mocker.patch('kirk.credentials.CredentialsHandler.set_password')
+
     runner = CliRunner()
     with runner.isolated_filesystem():
-        create_projects()
         ret = runner.invoke(
             kirk.commands.command_credential,
             [
@@ -129,7 +133,35 @@ def test_credential(create_projects):
             input="password"
         )
         assert ret.exit_code == 0
-        assert os.path.isfile("credentials.txt")
+
+    kirk.credentials.CredentialsHandler.set_password.assert_any_call(
+        "http://localhost:8080",
+        "admin",
+        "password"
+    )
+
+
+def test_kirk_run(mocker, create_projects):
+    """
+    test for 'kirk run' command
+    """
+    mocker.patch('kirk.runner.JobRunner.run')
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'project_1::mytest_0',
+                '--change-id',
+                'develop'
+            ],
+        )
+        assert ret.exit_code == 0
+
+    kirk.runner.JobRunner.run.assert_called_once()
 
 
 def test_kirk_check(mocker):
@@ -137,40 +169,13 @@ def test_kirk_check(mocker):
     Test JenkinsTester implementation
     """
     # build default plugins based on defaults file
-    currdir = os.path.abspath(os.path.dirname(__file__))
-    config_path = os.path.join(currdir, "..", "kirk", "files", "defaults.yml")
-    with open(config_path) as config_data:
-        def_plugins = yaml.safe_load(config_data)['kirk']['jenkins']['plugins']
-
-    ret_plugins_info = list()
-    for plugin in def_plugins:
-        ret_plugins_info.append(dict(shortName=plugin['name']))
-
-    # create data for get_job_info
-    ret_job_info = {
-        "lastCompletedBuild": {
-            "number": 1
-        }
-    }
-
-    # patch jenkins callback
-    mocker.patch('jenkins.Jenkins.__init__', return_value=None)
-    mocker.patch(
-        'jenkins.Jenkins.get_whoami',
-        return_value={
-            "fullName": "admin"
-        }
-    )
-    mocker.patch(
-        'jenkins.Jenkins.get_plugins_info',
-        return_value=ret_plugins_info
-    )
-    mocker.patch('jenkins.Jenkins.create_job')
-    mocker.patch('jenkins.Jenkins.get_job_info', return_value=ret_job_info)
-    mocker.patch('jenkins.Jenkins.reconfig_job')
-    mocker.patch('jenkins.Jenkins.build_job')
-    mocker.patch('jenkins.Jenkins.delete_job')
-    mocker.patch('jenkins.Jenkins.job_exists', return_value=False)
+    mocker.patch('kirk.checker.JenkinsTester.test_connection')
+    mocker.patch('kirk.checker.JenkinsTester.test_plugins')
+    mocker.patch('kirk.checker.JenkinsTester.test_job_create')
+    mocker.patch('kirk.checker.JenkinsTester.test_job_config')
+    mocker.patch('kirk.checker.JenkinsTester.test_job_info')
+    mocker.patch('kirk.checker.JenkinsTester.test_job_build')
+    mocker.patch('kirk.checker.JenkinsTester.test_job_delete')
 
     # run application
     runner = CliRunner()
@@ -184,15 +189,10 @@ def test_kirk_check(mocker):
     )
 
     # check if methods are called
-    jenkins.Jenkins.__init__.assert_any_call(
-        "http://localhost:8080",
-        "admin",
-        "password")
-    jenkins.Jenkins.get_whoami.assert_any_call()
-    jenkins.Jenkins.get_plugins_info.assert_any_call()
-    jenkins.Jenkins.create_job.assert_called()
-    jenkins.Jenkins.get_job_info.assert_any_call(
-        kirk.checker.JenkinsTester.TEST_JOB)
-    jenkins.Jenkins.reconfig_job.assert_called()
-    jenkins.Jenkins.build_job.assert_called()
-    jenkins.Jenkins.delete_job.assert_called()
+    kirk.checker.JenkinsTester.test_connection.assert_called_once()
+    kirk.checker.JenkinsTester.test_plugins.assert_called_once()
+    kirk.checker.JenkinsTester.test_job_create.assert_called_once()
+    kirk.checker.JenkinsTester.test_job_config.assert_called_once()
+    kirk.checker.JenkinsTester.test_job_info.assert_called_once()
+    kirk.checker.JenkinsTester.test_job_build.assert_called_once()
+    kirk.checker.JenkinsTester.test_job_delete.assert_called_once()
