@@ -23,7 +23,6 @@ def test_gitflow(tmp_path):
             scm:
                 git:
                     url: myurl.com/repo.git
-                    checkout: development
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
         jobs:
             - name: test_seed1
@@ -55,7 +54,6 @@ def test_p4flow(tmp_path):
             scm:
                 perforce:
                     stream: //depot/main
-                    changelist: 1001
                     workspace: depot_main_workspace
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
         jobs:

@@ -40,7 +40,6 @@ def test_runner_run(tmp_path, mocker):
             scm:
                 git:
                     url: https://github.com/acerv/marvin.git
-                    checkout: master
         jobs:
             - name: test_name0
               pipeline: pipeline.groovy

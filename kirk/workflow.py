@@ -73,11 +73,15 @@ class XmlBuilder:
 
         return seed_xml
 
-    def build_xml(self, job):
+    def build_xml(self, job, change_location=""):
         """
         Generate xml code according with a Jenkins job definition.
         :param job: jenkins job configuration object
         :type job: JenkinsJob
+        :param change_location: string used to recognize the location on source
+            code. For example, in git, change_location will be the commit hash
+            string. In perforce it will be the number of a changelist.
+        :type change_location: str
         :return: xml code as str
         """
         raise NotImplementedError()
@@ -123,19 +127,23 @@ class GitSCMFlow(XmlBuilder):
         </flow-definition>
     """
 
-    def build_xml(self, job):
+    def build_xml(self, job, change_location=""):
         if not job.scm:
             return None
 
         if 'git' not in job.scm:
             return None
 
+        checkout = "master"
+        if change_location:
+            checkout = change_location
+
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
         params["KIRK_SCRIPT_PATH"] = job.pipeline
         params["KIRK_GIT_CREDENTIAL"] = job.scm["git"].get("credential", "")
         params["KIRK_GIT_URL"] = job.scm["git"]["url"]
-        params["KIRK_GIT_CHECKOUT"] = job.scm["git"]["checkout"]
+        params["KIRK_GIT_CHECKOUT"] = change_location
         params['KIRK_PARAMETERS'] = self._create_params_xml(job)
 
         seed_xml = self._replace_xml_params(self.SEED_XML, params)
@@ -207,18 +215,24 @@ class PerforceSCMFlow(XmlBuilder):
         </flow-definition>
     """
 
-    def build_xml(self, job):
+    def build_xml(self, job, change_location=""):
         if not job.scm:
             return None
 
         if 'perforce' not in job.scm:
             return None
 
+        changelist = "latest"
+        if change_location:
+            # it will raise a ValueError exception is it's not an int
+            int(change_location)
+            changelist = change_location
+
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
         params["KIRK_SCRIPT_PATH"] = job.pipeline
         params["KIRK_P4_CREDENTIAL"] = job.scm["perforce"]["credential"]
-        params["KIRK_P4_CL"] = str(job.scm["perforce"]["changelist"])
+        params["KIRK_P4_CL"] = changelist
         params["KIRK_P4_WORKSPACE"] = job.scm["perforce"]["workspace"]
         params["KIRK_P4_STREAM"] = job.scm["perforce"]["stream"]
         params['KIRK_PARAMETERS'] = self._create_params_xml(job)
@@ -250,9 +264,11 @@ class ScriptFlow(XmlBuilder):
         </flow-definition>
     """
 
-    def build_xml(self, job):
+    def build_xml(self, job, change_location=""):
         if job.scm is None or 'none' not in job.scm:
             return None
+
+        del change_location
 
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
@@ -284,16 +300,20 @@ BUILDERS = [
 ]
 
 
-def build_xml(job):
+def build_xml(job, change_location=""):
     """
     Generate the xml code of a workflow with a Jenkins job definition.
     :param job: jenkins job configuration object
     :type job: JenkinsJob
+    :param change_location: string used to recognize the location on source
+        code. For example, in git, change_location will be the commit hash
+        string. In perforce it will be the number of a changelist.
+    :type change_location: str
     :return: xml code as str
     """
     xml_str = None
     for builder in BUILDERS:
-        xml_str = builder.build_xml(job)
+        xml_str = builder.build_xml(job, change_location)
         if xml_str:
             break
 

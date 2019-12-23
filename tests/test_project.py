@@ -485,7 +485,6 @@ def test_project_scm_git(tmp_path):
             scm:
                 git:
                     url: myurl.com/repo.git
-                    checkout: development
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
         jobs:
             - name: test_seed1
@@ -495,7 +494,6 @@ def test_project_scm_git(tmp_path):
     proj.load(str(project_file.absolute()))
 
     assert proj.jobs[0].scm["git"]["url"] == "myurl.com/repo.git"
-    assert proj.jobs[0].scm["git"]["checkout"] == "development"
     assert proj.jobs[0].scm["git"]["credential"] == "fbf1e43a-3442-455e-9c7f-31421a122370"
 
 
@@ -516,7 +514,6 @@ def test_project_scm_p4(tmp_path):
             scm:
                 perforce:
                     stream: //depot/main
-                    changelist: 1001
                     workspace: depot_main_workspace
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
         jobs:
@@ -527,7 +524,6 @@ def test_project_scm_p4(tmp_path):
     proj.load(str(project_file.absolute()))
 
     assert proj.jobs[0].scm["perforce"]["stream"] == "//depot/main"
-    assert proj.jobs[0].scm["perforce"]["changelist"] == 1001
     assert proj.jobs[0].scm["perforce"]["workspace"] == "depot_main_workspace"
     assert proj.jobs[0].scm["perforce"]["credential"] == "fbf1e43a-3442-455e-9c7f-31421a122370"
 
@@ -577,7 +573,6 @@ def test_project_env_var(tmp_path):
             scm:
                 perforce:
                     stream: //depot/main
-                    changelist: 1001
                     workspace: depot_main_${NODE}_${JOBNAME}
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
         jobs:

@@ -52,9 +52,6 @@ map:
               stream:
                 required: true
                 type: str
-              changelist:
-                required: true
-                type: int
               workspace:
                 required: true
                 type: str
@@ -67,9 +64,6 @@ map:
             required: false
             map:
               url:
-                required: true
-                type: str
-              checkout:
                 required: true
                 type: str
               credential:
