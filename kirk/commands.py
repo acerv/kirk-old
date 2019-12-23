@@ -227,7 +227,7 @@ def run(args, jobs_repr, user, change_id):
         # run all tests
         for job_str, job in jobs_to_run.items():
             click.secho("-> running %s (user='%s')" % (job_str, user))
-            job_location = args.runner.run(job, user, change_id)
+            job_location = args.runner.run(job, user=user, change_id=change_id)
             click.secho("-> configured %s" % job_location, fg="green")
     except KirkError as err:
         print_error(err, args.debug)
