@@ -4,7 +4,9 @@
    :synopsis: module handling credentials
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
+from keyring.errors import KeyringError
 from keyrings.alt.file import PlaintextKeyring
+from kirk import KirkError
 
 
 class Credentials:
@@ -58,8 +60,13 @@ class CredentialsHandler(Credentials):
         :type username: str
         :return: password as string
         """
-        self._inkr.file_path = self._file_path
-        password = self._inkr.get_password(section, username)
+        password = ""
+        try:
+            self._inkr.file_path = self._file_path
+            password = self._inkr.get_password(section, username)
+        except KeyringError as err:
+            raise KirkError(err)
+
         return password
 
     def set_password(self, section, username, password):
@@ -72,5 +79,8 @@ class CredentialsHandler(Credentials):
         :param password: user password
         :type username: str
         """
-        self._inkr.file_path = self._file_path
-        password = self._inkr.set_password(section, username, password)
+        try:
+            self._inkr.file_path = self._file_path
+            self._inkr.set_password(section, username, password)
+        except KeyringError as err:
+            raise KirkError(err)
