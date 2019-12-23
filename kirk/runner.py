@@ -8,6 +8,7 @@ import logging
 import jenkins
 import kirk.workflow
 from kirk import __version__
+from kirk import KirkError
 
 
 class Runner:
@@ -144,6 +145,8 @@ class JobRunner(Runner):
             # get seed build url
             job_info = self._server.get_job_info(seed_location)
             url = job_info["url"] + ("%s/" % str(job_info["nextBuildNumber"]))
+        except jenkins.JenkinsException as err:
+            raise KirkError(err)
         finally:
             del self._server
 
