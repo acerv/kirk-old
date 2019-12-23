@@ -52,7 +52,7 @@ def load_jobs(folder):
         jobs = kirk.utils.get_jobs_from_folder(folder)
         click.secho("collected %d jobs\n" %
                     len(jobs), fg="green", bold=True)
-    except Exception as err:
+    except KirkError as err:
         print_error(err, True)
 
     return jobs
@@ -156,7 +156,7 @@ def search(args, regexp):
             click.secho("found jobs", fg="white", bold=True)
             for job in found:
                 click.echo("  %s" % repr(job))
-    except Exception as err:
+    except KirkError as err:
         print_error(err, args.debug)
 
 
@@ -224,7 +224,7 @@ def run(args, jobs_repr, user):
             click.secho("-> running %s (user='%s')" % (job_str, user))
             job_location = args.runner.run(job, user)
             click.secho("-> configured %s" % job_location, fg="green")
-    except Exception as err:
+    except KirkError as err:
         print_error(err, args.debug)
 
 
@@ -251,7 +251,7 @@ def command_credential(args, credentials):
     try:
         handler = CredentialsHandler(credentials)
         handler.set_password(url, user, token)
-    except Exception as err:
+    except KirkError as err:
         print_error(err, True)
 
     click.echo()
