@@ -6,9 +6,9 @@
 """
 import logging
 import jenkins
-import kirk.workflow
 from kirk import __version__
 from kirk import KirkError
+from kirk.workflow import WorkflowBuilder
 
 
 class Runner:
@@ -61,6 +61,7 @@ class JobRunner(Runner):
         self._credentials = credentials
         self._owner = owner
         self._server = None
+        self._workflow = WorkflowBuilder()
 
     def _open_connection(self, job):
         """
@@ -104,7 +105,7 @@ class JobRunner(Runner):
         Create the job seed location.
         """
         # load the xml configuration according with scm
-        seed_xml = kirk.workflow.build_xml(job, change_id)
+        seed_xml = self._workflow.build_xml(job, change_id)
 
         # create job seed
         seed_location = "/".join([location, job.name])

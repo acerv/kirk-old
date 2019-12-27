@@ -87,7 +87,7 @@ class XmlBuilder:
         raise NotImplementedError()
 
 
-class GitSCMFlow(XmlBuilder):
+class _GitSCMFlow(XmlBuilder):
     """
     GIT SCM flow xml generator. It generates something like:
     """
@@ -150,7 +150,7 @@ class GitSCMFlow(XmlBuilder):
         return seed_xml
 
 
-class PerforceSCMFlow(XmlBuilder):
+class _PerforceSCMFlow(XmlBuilder):
     """
     Perforce SCM flow xml generator.
     """
@@ -241,7 +241,7 @@ class PerforceSCMFlow(XmlBuilder):
         return seed_xml
 
 
-class ScriptFlow(XmlBuilder):
+class _ScriptFlow(XmlBuilder):
     """
     Scripted flow xml generator.
     """
@@ -292,39 +292,34 @@ class ScriptFlow(XmlBuilder):
         return seed_xml
 
 
-# builders used by build_xml method
-BUILDERS = [
-    GitSCMFlow(),
-    PerforceSCMFlow(),
-    ScriptFlow()
-]
-
-
-def build_xml(job, change_id=""):
+class WorkflowBuilder(XmlBuilder):
     """
-    Generate the xml code of a workflow with a Jenkins job definition.
-    :param job: jenkins job configuration object
-    :type job: JenkinsJob
-    :param change_id: string used to recognize the location on source
-        code. For example, in git, change_id will be the commit hash
-        string. In perforce it will be the number of a changelist.
-    :type change_id: str
-    :return: xml code as str
+    The main workflow builder.
     """
-    xml_str = None
-    for builder in BUILDERS:
-        xml_str = builder.build_xml(job, change_id)
-        if xml_str:
-            break
 
-    if not xml_str:
-        raise KirkError("Unsupported SCM configuration:\n%s" % str(job.scm))
+    # builders used by build_xml method
+    BUILDERS = [
+        _GitSCMFlow(),
+        _PerforceSCMFlow(),
+        _ScriptFlow()
+    ]
 
-    dom = xml.dom.minidom.parseString(xml_str)
-    pretty_xml = dom.toprettyxml()
+    def build_xml(self, job, change_id=""):
+        xml_str = None
+        for builder in self.BUILDERS:
+            xml_str = builder.build_xml(job, change_id)
+            if xml_str:
+                break
 
-    # remove the double newline which is terrible in toprettyxml
-    pretty_xml = os.linesep.join(
-        [s for s in pretty_xml.splitlines() if s.strip()])
+        if not xml_str:
+            raise KirkError(
+                "Unsupported SCM configuration:\n%s" % str(job.scm))
 
-    return pretty_xml
+        dom = xml.dom.minidom.parseString(xml_str)
+        pretty_xml = dom.toprettyxml()
+
+        # remove the double newline which is terrible in toprettyxml
+        pretty_xml = os.linesep.join(
+            [s for s in pretty_xml.splitlines() if s.strip()])
+
+        return pretty_xml

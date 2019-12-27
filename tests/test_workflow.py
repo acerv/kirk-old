@@ -1,14 +1,20 @@
 """
 workflow module tests.
 """
+import pytest
 import xml.etree.ElementTree as ET
 import kirk.workflow
+from kirk import KirkError
 from kirk.project import Project
+from kirk.workflow import _GitSCMFlow
+from kirk.workflow import _PerforceSCMFlow
+from kirk.workflow import _ScriptFlow
+from kirk.workflow import WorkflowBuilder
 
 
 def test_gitflow(tmp_path):
     """
-    Test GitSCMFlow implementation
+    Test _GitSCMFlow implementation
     """
     project_file = tmp_path / "project.yml"
     project_file.write_text("""
@@ -31,7 +37,8 @@ def test_gitflow(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    xml_str = kirk.workflow.build_xml(proj.jobs[0], change_id="my_branch")
+    builder = _GitSCMFlow()
+    xml_str = builder.build_xml(proj.jobs[0], change_id="my_branch")
 
     tree = ET.fromstring(xml_str)
     tags = dict()
@@ -47,7 +54,7 @@ def test_gitflow(tmp_path):
 
 def test_p4flow(tmp_path):
     """
-    Test GitSCMFlow implementation
+    Test _PerforceSCMFlow implementation
     """
     project_file = tmp_path / "project.yml"
     project_file.write_text("""
@@ -71,7 +78,8 @@ def test_p4flow(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    xml_str = kirk.workflow.build_xml(proj.jobs[0], change_id="654321")
+    builder = _PerforceSCMFlow()
+    xml_str = builder.build_xml(proj.jobs[0], change_id="654321")
 
     tree = ET.fromstring(xml_str)
     tags = dict()
@@ -88,7 +96,7 @@ def test_p4flow(tmp_path):
 
 def test_scriptflow(tmp_path):
     """
-    Test ScriptFlow implementation
+    Test _ScriptFlow implementation
     """
     script_file = tmp_path / "script.groovy"
     script_file.write_text("""
@@ -117,7 +125,8 @@ def test_scriptflow(tmp_path):
     proj = Project()
     proj.load(str(project_file.absolute()))
 
-    xml_str = kirk.workflow.build_xml(proj.jobs[0])
+    builder = _ScriptFlow()
+    xml_str = builder.build_xml(proj.jobs[0])
 
     tree = ET.fromstring(xml_str)
     tags = dict()
@@ -132,3 +141,33 @@ def test_scriptflow(tmp_path):
     }
     """
     assert "sandbox" in tags and tags['sandbox'] == "false"
+
+
+def test_workflow_builder(mocker):
+    """
+    Test WorkflowBuilder implementation
+    """
+    mocker.patch(
+        "kirk.workflow._ScriptFlow.build_xml",
+        return_value='''<?xml version="1.0" encoding="UTF-8"?><mystuff/>''')
+
+    class FakeJob:
+        scm = "none"
+
+    builder = WorkflowBuilder()
+    builder.build_xml(FakeJob())
+
+
+def test_workflow_builder_exception(mocker):
+    """
+    Test WorkflowBuilder implementation with exceptions
+    """
+    mocker.patch("kirk.workflow._ScriptFlow.build_xml", return_value='')
+
+    class FakeJob:
+        scm = "none"
+
+    builder = WorkflowBuilder()
+
+    with pytest.raises(KirkError):
+        builder.build_xml(FakeJob())
