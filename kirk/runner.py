@@ -132,7 +132,10 @@ class JobRunner(Runner):
             proj_folder = None
 
             # create project folder
-            proj_folder = self._setup_project_folder(job, user)
+            proj_folder = self._setup_project_folder(
+                job,
+                user=user,
+                dev_folder=dev_folder)
 
             # create seed
             seed_location = self._create_seed(

@@ -154,7 +154,7 @@ def test_kirk_run(mocker, create_projects):
             kirk.commands.command_kirk,
             [
                 'run',
-                'project_1::mytest_0',
+                'project_1::mytest_1[PARAM_ZERO=zero]',
                 '-u',
                 'admin',
                 '--change-id',
@@ -165,7 +165,7 @@ def test_kirk_run(mocker, create_projects):
         jobs = kirk.commands.load_jobs("projects")
         myjob = None
         for job in jobs:
-            if str(job) == "project_1::mytest_0":
+            if str(job) == "project_1::mytest_1":
                 myjob = job
                 break
         kirk.runner.JobRunner.run.assert_called_with(

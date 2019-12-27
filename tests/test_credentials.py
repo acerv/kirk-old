@@ -1,46 +1,67 @@
 """
 Test credentials module
 """
-import os
 import pytest
+import keyring.errors
+import keyrings.alt.file
 from kirk.credentials import CredentialsHandler
+from kirk import KirkError
 
 
-class TestCredentialsHandler:
+@pytest.fixture
+def credentials(tmp_path, mocker):
     """
-    Test CredentialsHandler class
+    Fixture to expose credentials handler.
     """
+    mocker.patch('keyrings.alt.file.PlaintextKeyring.set_password')
+    mocker.patch('keyrings.alt.file.PlaintextKeyring.get_password',
+                 return_value="12345")
+    credentials = (tmp_path / "credentials.cfg").absolute()
 
-    _credentials = ""
+    yield CredentialsHandler(credentials)
 
-    @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
-        """
-        Test setup
-        """
-        self._credentials = tmp_path / "credentials.cfg"
 
-    @pytest.fixture(autouse=True)
-    def teardown(self):
-        """
-        Test teardown
-        """
-        if os.path.isfile(self._credentials):
-            os.remove(self._credentials)
+def test_set_password_exception(credentials):
+    """
+    Test set_password method with exception
+    """
+    keyrings.alt.file.PlaintextKeyring.set_password.side_effect = \
+        keyring.errors.KeyringError("mocked error")
 
-    @pytest.fixture
-    def credentials(self):
-        """
-        Fixture to expose credentials handler.
-        """
-        return CredentialsHandler(self._credentials)
-
-    def test_password_storage(self, credentials):
-        """
-        Save and read a password and check if it matches.
-        """
+    with pytest.raises(KirkError, match="mocked error"):
         credentials.set_password("jenkins.xyz.org", "kirk", "12345")
-        assert os.path.isfile(self._credentials)
 
-        password = credentials.get_password("jenkins.xyz.org", "kirk")
-        assert password == "12345"
+
+def test_get_password_exception(credentials):
+    """
+    Test get_password method with exception
+    """
+    keyrings.alt.file.PlaintextKeyring.get_password.side_effect = \
+        keyring.errors.KeyringError("mocked error")
+
+    with pytest.raises(KirkError, match="mocked error"):
+        credentials.get_password("jenkins.xyz.org", "kirk")
+
+
+def test_set_password(credentials):
+    """
+    Test set_password method
+    """
+    credentials.set_password("jenkins.xyz.org", "kirk", "12345")
+    keyrings.alt.file.PlaintextKeyring.set_password.assert_called_with(
+        "jenkins.xyz.org",
+        "kirk",
+        "12345"
+    )
+
+
+def test_get_password(credentials):
+    """
+    Test get_password method
+    """
+    password = credentials.get_password("jenkins.xyz.org", "kirk")
+    keyrings.alt.file.PlaintextKeyring.get_password.assert_called_with(
+        "jenkins.xyz.org",
+        "kirk"
+    )
+    assert password == "12345"
