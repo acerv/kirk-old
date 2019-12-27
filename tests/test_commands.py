@@ -170,8 +170,8 @@ def test_kirk_run(mocker, create_projects):
                 break
         kirk.runner.JobRunner.run.assert_called_with(
             myjob,
-            "admin",
-            "develop"
+            user="admin",
+            change_id="develop"
         )
 
 
