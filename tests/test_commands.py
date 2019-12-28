@@ -57,11 +57,86 @@ def create_projects():
 
 def test_kirk_help():
     """
-    Check for --help option
+    Test for --help option
     """
     runner = CliRunner()
-    ret = runner.invoke(kirk.commands.command_kirk, '--help')
+    ret = runner.invoke(kirk.commands.command_kirk, ['--help'])
     assert ret.exit_code == 0
+
+
+def test_kirk_list_with_credentials():
+    """
+    Test for "kirk list" with --credentials option
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        os.mkdir("projects")
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                '--credentials',
+                'my_credentials.txt',
+                'list'
+            ]
+        )
+        assert ret.exit_code == 0
+        assert "credentials: my_credentials.txt" in ret.output
+
+
+def test_kirk_list_with_owner():
+    """
+    Test for "kirk list" with --owner option
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        os.mkdir("projects")
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                '--owner',
+                'my_user',
+                'list'
+            ]
+        )
+        assert ret.exit_code == 0
+        assert "owner: my_user" in ret.output
+
+
+def test_kirk_list_with_debug():
+    """
+    Test for "kirk list" with --debug option
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        os.mkdir("projects")
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                '--debug',
+                'list'
+            ]
+        )
+        assert ret.exit_code == 0
+        assert "debugging session" in ret.output
+
+
+def test_kirk_list_with_projects_folder():
+    """
+    Test for "kirk list" with --projects option
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        os.mkdir("my_projects")
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                '--projects',
+                'my_projects',
+                'list'
+            ]
+        )
+        assert ret.exit_code == 0
+        assert "collected 0 jobs" in ret.output
 
 
 def test_kirk_list_jobs(create_projects):
@@ -114,6 +189,23 @@ def test_kirk_search(create_projects):
         assert 'project_1::mytest_1[PARAM_0=zero]' in ret.output
 
 
+def test_kirk_search_no_jobs(create_projects):
+    """
+    test for "kirk show" command when no jobs are found
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'search', '.*this_job_doesnt_exist'
+            ]
+        )
+        assert ret.exit_code == 1
+        assert 'No jobs found' in ret.output
+
+
 def test_kirk_credential(mocker):
     """
     test for "kirk credential" command
@@ -133,7 +225,6 @@ def test_kirk_credential(mocker):
             input="password"
         )
         assert ret.exit_code == 0
-
         kirk.credentials.CredentialsHandler.set_password.assert_any_call(
             "http://localhost:8080",
             "admin",
@@ -141,9 +232,55 @@ def test_kirk_credential(mocker):
         )
 
 
-def test_kirk_run(mocker, create_projects):
+def test_kirk_run_job_with_bad_format(mocker):
     """
-    test for 'kirk run' command
+    test for 'kirk run' command with bad job format string
+    """
+    runner = CliRunner()
+    ret = runner.invoke(
+        kirk.commands.command_kirk,
+        [
+            'run',
+            'this_job_doesnt_exist'
+        ],
+    )
+    assert ret.exit_code == 1
+    assert "Invalid job token" in ret.output
+
+    ret = runner.invoke(
+        kirk.commands.command_kirk,
+        [
+            'run',
+            '::this_job_doesnt_exist'
+        ],
+    )
+    assert ret.exit_code == 1
+    assert "Invalid job token" in ret.output
+
+    ret = runner.invoke(
+        kirk.commands.command_kirk,
+        [
+            'run',
+            '[PARam=1]this_job_doesnt_exist'
+        ],
+    )
+    assert ret.exit_code == 1
+    assert "Invalid job token" in ret.output
+
+    ret = runner.invoke(
+        kirk.commands.command_kirk,
+        [
+            'run',
+            'mytest_1[PARAM_ZERO=zero]'
+        ],
+    )
+    assert ret.exit_code == 1
+    assert "Invalid job token" in ret.output
+
+
+def test_kirk_run_with_params(mocker, create_projects):
+    """
+    test for 'kirk run' command with single job
     """
     mocker.patch('kirk.runner.JobRunner.run')
 
@@ -154,11 +291,7 @@ def test_kirk_run(mocker, create_projects):
             kirk.commands.command_kirk,
             [
                 'run',
-                'project_1::mytest_1[PARAM_ZERO=zero]',
-                '-u',
-                'admin',
-                '--change-id',
-                'develop'
+                'project_1::mytest_1[PARAM_ZERO=zero]'
             ],
         )
         assert ret.exit_code == 0
@@ -168,18 +301,120 @@ def test_kirk_run(mocker, create_projects):
             if str(job) == "project_1::mytest_1":
                 myjob = job
                 break
+
         kirk.runner.JobRunner.run.assert_called_with(
             myjob,
+            user="",
+            change_id=""
+        )
+
+
+def test_kirk_run_multiple(mocker, create_projects):
+    """
+    test for 'kirk run' command with multiple jobs
+    """
+    mocker.patch('kirk.runner.JobRunner.run')
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'project_0::mytest_0',
+                'project_0::mytest_1',
+                'project_1::mytest_0',
+                'project_1::mytest_1[PARAM_0=zero,PARAM_1=one]',
+            ],
+        )
+        assert ret.exit_code == 0
+        jobs = kirk.commands.load_jobs("projects")
+        for job in jobs:
+            kirk.runner.JobRunner.run.assert_any_call(
+                job,
+                user="",
+                change_id=""
+            )
+
+
+def test_kirk_run_with_user(mocker, create_projects):
+    """
+    test for 'kirk run --user' command
+    """
+    mocker.patch('kirk.runner.JobRunner.run')
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'project_1::mytest_1',
+                '--user',
+                'admin'
+            ],
+        )
+        assert ret.exit_code == 0
+        kirk.runner.JobRunner.run.assert_called_with(
+            mocker.ANY,
             user="admin",
+            change_id=mocker.ANY,
+        )
+
+
+def test_kirk_run_with_change_id(mocker, create_projects):
+    """
+    test for 'kirk run --change-id' command
+    """
+    mocker.patch('kirk.runner.JobRunner.run')
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'project_1::mytest_1',
+                '--change-id',
+                'develop'
+            ],
+        )
+        assert ret.exit_code == 0
+        kirk.runner.JobRunner.run.assert_called_with(
+            mocker.ANY,
+            user=mocker.ANY,
             change_id="develop"
         )
+
+
+def test_kirk_run_job_not_found(mocker, create_projects):
+    """
+    test for 'kirk run' command when job is not found
+    """
+    mocker.patch('kirk.runner.JobRunner.run')
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'this_job_doesnt_exist::job'
+            ],
+        )
+        assert ret.exit_code == 1
+        assert "Cannot find the following jobs" in ret.output
 
 
 def test_kirk_check(mocker):
     """
     Test JenkinsTester implementation
     """
-    # build default plugins based on defaults file
+    mocker.patch('time.sleep')
     mocker.patch('kirk.checker.JenkinsTester.test_connection')
     mocker.patch('kirk.checker.JenkinsTester.test_plugins')
     mocker.patch('kirk.checker.JenkinsTester.test_job_create')
@@ -188,9 +423,8 @@ def test_kirk_check(mocker):
     mocker.patch('kirk.checker.JenkinsTester.test_job_build')
     mocker.patch('kirk.checker.JenkinsTester.test_job_delete')
 
-    # run application
     runner = CliRunner()
-    runner.invoke(
+    ret = runner.invoke(
         kirk.commands.command_check,
         [
             'http://localhost:8080',
@@ -198,8 +432,8 @@ def test_kirk_check(mocker):
             'password'
         ]
     )
+    assert ret.exit_code == 0
 
-    # check if methods are called
     kirk.checker.JenkinsTester.test_connection.assert_called_once()
     kirk.checker.JenkinsTester.test_plugins.assert_called_once()
     kirk.checker.JenkinsTester.test_job_create.assert_called_once()

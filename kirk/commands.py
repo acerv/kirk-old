@@ -5,6 +5,7 @@
 .. moduleauthor:: Andrea Cervesato <andrea.cervesato@mailbox.org>
 """
 import os
+import sys
 import time
 import traceback
 import click
@@ -41,6 +42,7 @@ def print_error(err, debug):
     if debug:
         msg = traceback.format_exc()
         click.secho(msg, fg="red", err=True)
+    sys.exit(1)
 
 
 def load_jobs(folder):
@@ -54,6 +56,8 @@ def load_jobs(folder):
                     len(jobs), fg="green", bold=True)
     except KirkError as err:
         print_error(err, True)
+    except ValueError as err:
+        print_error(err, False)
 
     return jobs
 
@@ -151,7 +155,7 @@ def search(args, regexp):
     try:
         found = kirk.utils.get_project_regexp(regexp, projects)
         if not found:
-            click.secho("no jobs found.")
+            raise KirkError("No jobs found.")
         else:
             click.secho("found jobs", fg="white", bold=True)
             for job in found:
@@ -191,39 +195,46 @@ def run(args, jobs_repr, user, change_id):
         click.echo("  " + job_str)
     click.echo()
 
-    # get jobs to run
-    jobs_to_run = dict()
-    tokenizer = JobTokenizer()
+    try:
+        # get jobs to run
+        jobs_to_run = dict()
+        tokenizer = JobTokenizer()
 
-    for job_str in jobs_repr:
-        project, job_name, params = tokenizer.decode(job_str)
+        for job_str in jobs_repr:
+            token = tokenizer.decode(job_str)
+            if not token:
+                raise KirkError(
+                    "Invalid job token. Please use the following syntax:\n"
+                    "\n  <project>::<job>[<parameters>]\n"
+                )
 
-        for job in args.jobs:
-            if job_name == job.name and project == job.project.name:
-                # we found the job
-                jobs_to_run[job_str] = job
-                break
+            project, job_name, params = token
 
-        for name, value in params.items():
-            for i in range(0, len(job.parameters)):
-                if job.parameters[i].name == name:
-                    job.parameters[i].value = value
+            for job in args.jobs:
+                if job_name == job.name and project == job.project.name:
+                    # we found the job
+                    jobs_to_run[job_str] = job
                     break
 
-    if len(jobs_to_run) != len(jobs_repr):
-        click.secho("ERROR: cannot find the following jobs", fg="red")
+            for name, value in params.items():
+                for i in range(0, len(job.parameters)):
+                    if job.parameters[i].name == name:
+                        job.parameters[i].value = value
+                        break
 
-        not_available = list(jobs_repr)
-        for key, value in jobs_to_run.items():
-            not_available.remove(key)
+        if len(jobs_to_run) != len(jobs_repr):
+            err = "Cannot find the following jobs\n"
 
-        for job_str in not_available:
-            click.echo("  %s" % job_str)
+            not_available = list(jobs_repr)
+            for key, value in jobs_to_run.items():
+                not_available.remove(key)
 
-        click.echo("\nplease use 'list' command to show available jobs")
-        return
+            for job_str in not_available:
+                err += "  %s\n" % job_str
 
-    try:
+            err += "\nPlease use 'list' command to show available jobs"
+            raise KirkError(err)
+
         # run all tests
         for job_str, job in jobs_to_run.items():
             click.secho("-> running %s (user='%s')" % (job_str, user))
