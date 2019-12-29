@@ -1,15 +1,8 @@
-.. kirk documentation master file, created by
-   sphinx-quickstart on Sun Dec 29 12:58:48 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Welcome to kirk's documentation!
 ================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
+Kirk is a remote Jenkins jobs builder.
 
 
 Indices and tables

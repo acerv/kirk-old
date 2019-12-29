@@ -174,7 +174,7 @@ class JobItem:
     @property
     def parameters(self):
         """
-        list(:py:class:`Parameter`): Jenkins job parameters.
+        list(:py:class:`kirk.project.JobParameter`): Jenkins job parameters.
         """
         return self._parameters
 
