@@ -32,49 +32,46 @@ class JobParameter:
     @property
     def name(self):
         """
-        Name of the job parameter.
+        str: Name of the job parameter.
         """
         return self._name
 
     @property
     def label(self):
         """
-        A label for the job parameter.
+        str: A label for the job parameter.
         """
         return self._label
 
     @property
     def default(self):
         """
-        Default value of the job parameter.
+        str: Default value of the job parameter.
         """
         return self._default
 
     @property
     def show(self):
         """
-        If true, the parameter has to be shown.
+        bool: If true, the parameter has to be shown.
         """
         return self._show
 
     @property
     def value(self):
         """
-        Parameter value.
+        str: Parameter value.
         """
         return self._value
 
     @value.setter
     def value(self, value):
-        """
-        Set parameter value as str.
-        """
         self._value = str(value)
 
 
 class JobItem:
     """
-    Jenkins job to be executed.
+    A generic job loaded from a project.
     """
 
     def __init__(self, defaults_cfg, job_cfg, project):
@@ -163,56 +160,56 @@ class JobItem:
     @property
     def name(self):
         """
-        Name of the server job.
+        str: Name of the job.
         """
         return self._name
 
     @property
     def server(self):
         """
-        String of the server URL.
+        str: String of the server URL.
         """
         return self._server
 
     @property
     def parameters(self):
         """
-        Jenkins job parameters.
+        list(:py:class:`Parameter`): Jenkins job parameters.
         """
         return self._parameters
 
     @property
     def dependences(self):
         """
-        List of job which this job depends to.
+        list(str): List of jobs which this job depends to.
         """
         return self._dependences
 
     @property
     def pipeline(self):
         """
-        Jenkins job script location.
+        str: Jenkins job script location.
         """
         return self._pipeline
 
     @property
     def scm(self):
         """
-        Jenkins job scm configuration.
+        dict: Jenkins job scm configuration.
         """
         return self._scm
 
     @property
     def project(self):
         """
-        Project object for this job.
+        :py:class:`Project`: Project instance of this job.
         """
         return self._project
 
 
 class Project:
     """
-    Configuration loader class.
+    Project definition class.
     """
 
     def __init__(self):
@@ -228,9 +225,13 @@ class Project:
     def load(self, path):
         """
         Load a project configuration.
-        :param path: configuration path
-        :type path: str
-        :return: dict
+
+        Args:
+            path(str): configuration file path.
+
+        Raises:
+            ValueError: if input args cannot be accepted.
+            KirkError: if input file cannot be parsed.
         """
         if not path:
             raise ValueError("'path' is empty")
@@ -281,55 +282,48 @@ class Project:
     @property
     def name(self):
         """
-        Project name.
-        :return: str
+        str: Project name.
         """
         return self._name
 
     @property
     def description(self):
         """
-        Project description.
-        :return: str
+        str: Project description.
         """
         return self._description
 
     @property
     def author(self):
         """
-        Project author.
-        :return: str
+        str: Project author.
         """
         return self._author
 
     @property
     def year(self):
         """
-        Project year.
-        :return: int
+        int: Project year.
         """
         return self._year
 
     @property
     def version(self):
         """
-        Project version.
-        :return: float
+        float: Project version.
         """
         return self._version
 
     @property
     def location(self):
         """
-        Project location in the Jenkins server.
-        :return: float
+        float: Project location in the Jenkins server.
         """
         return self._location
 
     @property
     def jobs(self):
         """
-        List of the available jobs.
-        :return: list(JobItem)
+        :py:class:`JobItem`: List of the available jobs.
         """
         return self._jobs
