@@ -324,6 +324,6 @@ class Project:
     @property
     def jobs(self):
         """
-        :py:class:`JobItem`: List of the available jobs.
+        :py:class:`kirk.project.JobItem`: List of the available jobs.
         """
         return self._jobs

@@ -70,7 +70,7 @@ class JobRunner(Runner):
         Open a connection with Jenkins server.
 
         Args:
-            job(:py:class:`JobItem`): job to run.
+            job(:py:class:`kirk.project.JobItem`): job to run.
 
         Returns:
             jenkins.Jenkins: Jenkins communication object.
@@ -87,7 +87,7 @@ class JobRunner(Runner):
         Setup a project folder creating directories and seed job.
 
         Args:
-            job(:py:class:`JobItem`): job to run.
+            job(:py:class:`kirk.project.JobItem`): job to run.
             user(str): developer name.
             dev_folder(str): folder userd by developers.
 
@@ -121,7 +121,7 @@ class JobRunner(Runner):
 
         Args:
             location(str): job location on jenkins server.
-            job(:py:class:`JobItem`): job to run.
+            job(:py:class:`kirk.project.JobItem`): job to run.
             change_id(str): change identifier.
 
         Returns:

@@ -58,7 +58,7 @@ def load_jobs(folder):
         folder(str): folder where projects are located.
 
     Returns:
-        list(:py:class:`JobItem`): list of jobs fetched from ``folder``.
+        list(:py:class:`kirk.project.JobItem`): list of jobs fetched from ``folder``.
     """
     jobs = None
     try:
@@ -80,7 +80,7 @@ def load_projects(jobs):
     Return the list of the available projects according to ``jobs``.
 
     Args:
-        jobs(list(:py:class:`JobItem`)): list of jobs.
+        jobs(list(:py:class:`kirk.project.JobItem`)): list of jobs.
 
     Returns:
         list(str): list of projects for all the given ``jobs``.
