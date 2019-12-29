@@ -20,7 +20,7 @@ class Credentials:
 
         Args:
             section(str): section of the ``username``.
-            username(str): user name we want to get password.
+            username(str): user name of which we want the password to get.
 
         Returns:
             str: ``username`` password.
@@ -36,7 +36,7 @@ class Credentials:
 
         Args:
             section(str): section of the ``username``.
-            username(str): user name we want to set ``password``.
+            username(str): user name of which we want the ``password`` to set.
             password(str): password of the ``username``.
 
         Raises:

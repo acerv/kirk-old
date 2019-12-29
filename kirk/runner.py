@@ -13,32 +13,34 @@ from kirk.workflow import WorkflowBuilder
 
 class Runner:
     """
-    base class for Jenkins job runner.
+    Base class for Jenkins job runner.
     """
 
     def run(self, job, user=None, dev_folder="dev", change_id=""):
         """
-        Run a jenkins job for the given user.
-        :param job: job to run
-        :type job: JobItem
-        :param user: user name running the job. This parameter is used to
-            create the jenkins job. For example, if user="myuser", the ending
-            job will be stored inside the following folder:
+        Run a jenkins job for the given user. If ``user`` is given, the ending
+        url will change according with ``dev_folder`` as following:
 
-                myjenkins.com:8080/job/myproject/job/dev/job/myuser/job/myjob/
+            * if it doesn't exist, project folder is created
+            * ``dev_folder`` is merged with ``user`` in order to create
+               a directory inside the project folder as following:
 
-            If no user has provided, job will be created and run inside the
-            main project folder. For example:
+               ``myjenkins.com:8080/job/myproject/job/dev/job/myuser/``
 
-                myjenkins.com:8080/job/myproject/job/myjob/
+        Args:
+            job(:py:class:`kirk.project.JobItem`): job to run.
+            user(str): user running the job.
+            dev_folder(str): folder name where ``user`` jobs are stored
+                (default: 'dev')
+            change_id(str): change identifier storing source code modifications.
+                For example, in Git, ``change_id`` might be the commit hash
+                string. In Perforce it will be the changelist number.
 
-        :param dev_folder: folder where user jobs are stored (default: 'dev')
-        :type dev_folder: str
-        :param change_id: string used to recognize the location on source
-            code. For example, in git, change_id will be the commit hash
-            string. In perforce it will be the number of a changelist.
-        :type change_id: str
-        :return: url as string where job has been created
+        Returns:
+            str: url of the job which is building in the jenkins server.
+
+        Raises:
+            :py:class:`KirkError`: raised when some errors occur before/during job run.
         """
         raise NotImplementedError()
 
@@ -50,12 +52,12 @@ class JobRunner(Runner):
 
     def __init__(self, credentials, owner="kirk"):
         """
-        :param credentials: credentials handler object
-        :type credentials: Credentials
-        :param projects: list of the projects to load
-        :type projects: list(Project)
-        :param owner: owner username to create jobs in the jenkins server
-        :type owner: str
+        Class constructor.
+
+        Args:
+            credentials(:py:class:`Credentials`): credentials handler object.
+            owner(str): owner name that handles REST API communication with
+                the jenkins server.
         """
         self._logger = logging.getLogger("runner")
         self._credentials = credentials
@@ -66,6 +68,12 @@ class JobRunner(Runner):
     def _open_connection(self, job):
         """
         Open a connection with Jenkins server.
+
+        Args:
+            job(:py:class:`JobItem`): job to run.
+
+        Returns:
+            jenkins.Jenkins: Jenkins communication object.
         """
         self._logger.info("getting '%s' credentials", self._owner)
         password = self._credentials.get_password(job.server, self._owner)
@@ -77,7 +85,14 @@ class JobRunner(Runner):
     def _setup_project_folder(self, job, user=None, dev_folder="dev"):
         """
         Setup a project folder creating directories and seed job.
-        Return the project location.
+
+        Args:
+            job(:py:class:`JobItem`): job to run.
+            user(str): developer name.
+            dev_folder(str): folder userd by developers.
+
+        Returns:
+            str: location of the job to run.
         """
         dev_location = job.project.location
         if user:
@@ -103,6 +118,14 @@ class JobRunner(Runner):
     def _create_seed(self, location, job, change_id):
         """
         Create the job seed location.
+
+        Args:
+            location(str): job location on jenkins server.
+            job(:py:class:`JobItem`): job to run.
+            change_id(str): change identifier.
+
+        Returns:
+            str: location on jenkins server.
         """
         # load the xml configuration according with scm
         seed_xml = self._workflow.build_xml(job, change_id)
