@@ -232,50 +232,52 @@ def test_kirk_credential(mocker):
         )
 
 
-def test_kirk_run_job_with_bad_format(mocker):
+def test_kirk_run_job_with_bad_format(mocker, create_projects):
     """
     test for 'kirk run' command with bad job format string
     """
     runner = CliRunner()
-    ret = runner.invoke(
-        kirk.commands.command_kirk,
-        [
-            'run',
-            'this_job_doesnt_exist'
-        ],
-    )
-    assert ret.exit_code == 1
-    assert "Invalid job token" in ret.output
+    with runner.isolated_filesystem():
+        create_projects()
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'this_job_doesnt_exist'
+            ],
+        )
+        assert ret.exit_code == 1
+        assert "Invalid job token" in ret.output
 
-    ret = runner.invoke(
-        kirk.commands.command_kirk,
-        [
-            'run',
-            '::this_job_doesnt_exist'
-        ],
-    )
-    assert ret.exit_code == 1
-    assert "Invalid job token" in ret.output
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                '::this_job_doesnt_exist'
+            ],
+        )
+        assert ret.exit_code == 1
+        assert "Invalid job token" in ret.output
 
-    ret = runner.invoke(
-        kirk.commands.command_kirk,
-        [
-            'run',
-            '[PARam=1]this_job_doesnt_exist'
-        ],
-    )
-    assert ret.exit_code == 1
-    assert "Invalid job token" in ret.output
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                '[PARam=1]this_job_doesnt_exist'
+            ],
+        )
+        assert ret.exit_code == 1
+        assert "Invalid job token" in ret.output
 
-    ret = runner.invoke(
-        kirk.commands.command_kirk,
-        [
-            'run',
-            'mytest_1[PARAM_ZERO=zero]'
-        ],
-    )
-    assert ret.exit_code == 1
-    assert "Invalid job token" in ret.output
+        ret = runner.invoke(
+            kirk.commands.command_kirk,
+            [
+                'run',
+                'mytest_1[PARAM_ZERO=zero]'
+            ],
+        )
+        assert ret.exit_code == 1
+        assert "Invalid job token" in ret.output
 
 
 def test_kirk_run_with_params(mocker, create_projects):

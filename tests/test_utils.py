@@ -87,7 +87,7 @@ def test_get_projects_from_folder_error(tmp_path):
     with pytest.raises(ValueError, match="folder is empty"):
         kirk.utils.get_projects_from_folder("")
 
-    with pytest.raises(ValueError, match="folder is not a directory"):
+    with pytest.raises(ValueError, match="project folder doesn't exist"):
         kirk.utils.get_projects_from_folder("asda3fasds")
 
     with pytest.raises(KirkError, match="Two projects with the same name"):
@@ -173,7 +173,7 @@ def test_get_jobs_from_folder_error(tmp_path):
     with pytest.raises(ValueError, match="folder is empty"):
         kirk.utils.get_jobs_from_folder("")
 
-    with pytest.raises(ValueError, match="folder is not a directory"):
+    with pytest.raises(ValueError, match="project folder doesn't exist"):
         kirk.utils.get_jobs_from_folder("asda3fasds")
 
     with pytest.raises(KirkError, match="Two projects with the same name"):
