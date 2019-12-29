@@ -12,16 +12,23 @@ from kirk.project import Project
 
 def get_projects_from_folder(folder):
     """
-    Return all projects discovered in the given directory.
-    :param folder: directory where projects files are located
-    :type folder: str
-    :return: list(Project)
+    Return projects discovered in the given directory.
+
+    Args:
+        folder(str): folder containing projects files.
+
+    Returns:
+        list(:py:class:`kirk.project.Project`): list of projects.
+
+    Raises:
+        ValueError: raised when folder argument is empty or folder doesn't exist.
+        :py:class:`KirkError`: raised when there are two projects with the same name.
     """
     if not folder:
         raise ValueError("folder is empty")
 
     if not os.path.isdir(folder):
-        raise ValueError("folder is not a directory")
+        raise ValueError("project folder doesn't exist")
 
     projects = list()
 
@@ -46,10 +53,17 @@ def get_projects_from_folder(folder):
 
 def get_jobs_from_folder(folder):
     """
-    Return all jobs discovered in the given directory.
-    :param folder: directory where projects files are located
-    :type folder: str
-    :return: list(str)
+    Return jobs discovered in the given directory.
+
+    Args:
+        folder(str): folder containing projects files.
+
+    Returns:
+        list(:py:class:`kirk.project.JobItem`): list of jobs.
+
+    Raises:
+        ValueError: raised when folder argument is empty or folder doesn't exist.
+        :py:class:`KirkError`: raised when there are two projects with the same name.
     """
     projects = get_projects_from_folder(folder)
 
@@ -62,12 +76,17 @@ def get_jobs_from_folder(folder):
 
 def get_project_regexp(regexp, projects):
     """
-    Search for tests inside a projects list using regular expressions.
-    :param regexp: regexp to use for all tests names
-    :type regexp: str
-    :param projects: projects to search into
-    :type projects: list(Project)
-    :return: list(JobItem)
+    Return projects of which the regexp matches projects name.
+
+    Args:
+        regexp(str): regular expression used to match projects names.
+        projects(:py:class:`kirk.project.Project`): list of projects.
+
+    Returns:
+        list(:py:class:`kirk.project.Project`): list of projects.
+
+    Raises:
+        ValueError: raised when input arguments are empty.
     """
     if not regexp:
         raise ValueError("regexp is not defined")

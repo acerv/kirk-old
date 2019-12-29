@@ -10,7 +10,7 @@ import yaml
 from kirk import KirkError
 
 
-def __yaml_constructor(loader, node):
+def _yaml_constructor(loader, node):
     """
     Get environment variables.
     """
@@ -30,15 +30,18 @@ def __yaml_constructor(loader, node):
 def load(path, tag="!ENV"):
     """
     Load an extended yaml file with environmental variables support.
-    For example:
+    For example
+
+    .. code-block:: yaml
 
         name: !ENV ${MY_ENV_VAR}
 
-    :param path: path of the Yaml file
-    :type path: str
-    :param tag: environment variable tag (default: '!ENV')
-    :type tag: str
-    :return: file content as dict
+    Args:
+        path(str): path of the Yaml file.
+        tag(str): environment variable tag (default: '!ENV').
+
+    Returns:
+        dict: file content.
     """
     if not path:
         raise ValueError("path is empty")
@@ -58,7 +61,7 @@ def load(path, tag="!ENV"):
     imp_pattern = re.compile(r'%s .*?\${(\w+)}.*?' % tag)
 
     yaml.SafeLoader.add_implicit_resolver(tag, imp_pattern, None)
-    yaml.SafeLoader.add_constructor(tag, __yaml_constructor)
+    yaml.SafeLoader.add_constructor(tag, _yaml_constructor)
 
     # load project file
     file_def = dict()

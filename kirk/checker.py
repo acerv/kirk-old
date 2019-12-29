@@ -60,9 +60,9 @@ class Tester:
         raise NotImplementedError()
 
 
-class JenkinsTester:
+class JenkinsTester(Tester):
     """
-    Implementation of a Jenkins tester.
+    Implementation of a Jenkins server tester.
     """
 
     TEST_JOB = "__kirk_delete_me"

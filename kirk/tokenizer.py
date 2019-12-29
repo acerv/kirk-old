@@ -14,32 +14,38 @@ class Tokenizer:
 
     def encode(self, project, job, params=None):
         """
-        Encode project name, job name and job parameters into a unique
-        string identifier.
-        :param project: project name
-        :type project: str
-        :param job: job name
-        :type job: str
-        :param params: list of parameters with value. If None, they are not
-            used by method.
-        :type params: dict
-        :return: str
+        Encode ``project``, ``job`` and ``params`` into a unique string
+        identifier.
+
+        Args:
+            project(str): project name.
+            job(str): job name.
+            params(dict): list of parameters with value. If None, they are not
+                used by method.
+
+        Returns:
+            str: encoded string.
         """
         raise NotImplementedError()
 
     def decode(self, token):
         """
         Decode a token string into project name, job name and job parameters.
-        :param token: token string
-        :type token: str
-        :return: (str, str, dict)
+
+        Args:
+            token(str): token string that identifies a job.
+
+        Returns:
+            (str, str, dict): a set cotaining project name, job name, dict of parameters.
         """
         raise NotImplementedError()
 
 
 class JobTokenizer(Tokenizer):
     """
-    Tokenizer that encode job string as following:
+    A job tokenizer. The following data:
+
+    .. code-block:: python
 
         project = "myproject"
         job = "myjob"
@@ -48,7 +54,9 @@ class JobTokenizer(Tokenizer):
             param1="1",
         )
 
-    becomes...
+    will become...
+
+    .. code-block:: python
 
         "myproject::job[param0=0,param1=1]"
 

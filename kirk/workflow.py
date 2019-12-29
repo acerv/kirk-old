@@ -13,8 +13,8 @@ from kirk import KirkError
 
 class XmlBuilder:
     """
-    A generic builder translating parts of a JenkinsJob object into
-    XML source code.
+    A generic builder class a :py:class:`kirk.project.JobItem` object into
+    a XML string.
     """
 
     def __init__(self):
@@ -75,21 +75,23 @@ class XmlBuilder:
 
     def build_xml(self, job, change_id=""):
         """
-        Generate xml code according with a Jenkins job definition.
-        :param job: jenkins job configuration object
-        :type job: JenkinsJob
-        :param change_id: string used to recognize the location on source
-            code. For example, in git, change_id will be the commit hash
-            string. In perforce it will be the number of a changelist.
-        :type change_id: str
-        :return: xml code as str
+        Converts the ``job`` item into a Jenkins job XML configuration.
+
+        Args:
+            job(:py:class:`kirk.project.JobItem`): job item to convert.
+            change_id(str): change identifier storing source code modifications.
+                For example, in Git, ``change_id`` might be the commit hash
+                string. In Perforce it will be the changelist number.
+
+        Returns:
+            str: Jenkins job XML configuration.
         """
         raise NotImplementedError()
 
 
 class _GitSCMFlow(XmlBuilder):
     """
-    GIT SCM flow xml generator. It generates something like:
+    GIT SCM flow XML generator.
     """
 
     SEED_XML = """<?xml version='1.1' encoding='UTF-8'?>
@@ -152,7 +154,7 @@ class _GitSCMFlow(XmlBuilder):
 
 class _PerforceSCMFlow(XmlBuilder):
     """
-    Perforce SCM flow xml generator.
+    Perforce SCM flow XML generator.
     """
 
     SEED_XML = """<?xml version='1.1' encoding='UTF-8'?>
@@ -243,7 +245,7 @@ class _PerforceSCMFlow(XmlBuilder):
 
 class _ScriptFlow(XmlBuilder):
     """
-    Scripted flow xml generator.
+    Scripted flow XML generator.
     """
 
     SEED_XML = """<?xml version='1.1' encoding='UTF-8'?>
@@ -294,11 +296,10 @@ class _ScriptFlow(XmlBuilder):
 
 class WorkflowBuilder(XmlBuilder):
     """
-    The main workflow builder.
+    The main workflow XML builder.
     """
 
-    # builders used by build_xml method
-    BUILDERS = [
+    _BUILDERS = [
         _GitSCMFlow(),
         _PerforceSCMFlow(),
         _ScriptFlow()
@@ -306,7 +307,7 @@ class WorkflowBuilder(XmlBuilder):
 
     def build_xml(self, job, change_id=""):
         xml_str = None
-        for builder in self.BUILDERS:
+        for builder in self._BUILDERS:
             xml_str = builder.build_xml(job, change_id)
             if xml_str:
                 break
