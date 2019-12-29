@@ -14,55 +14,55 @@ from kirk import KirkError
 
 class Tester:
     """
-    Base class for Jenkins tester
+    Base class for a Jenkins server tester.
     """
 
     def test_connection(self):
         """
-        check for jenkins server connection
+        Test if Jenkins server accepts a connection.
         """
         raise NotImplementedError()
 
     def test_plugins(self):
         """
-        check for installed plugins
+        Test if Jenkins server has the minimum plugins requirements.
         """
         raise NotImplementedError()
 
     def test_job_create(self):
         """
-        check for job creation
+        Test if Jenkins server accepts job creation.
         """
         raise NotImplementedError()
 
     def test_job_config(self):
         """
-        check for job configuration
+        Test if Jenkins server accepts job configuration.
         """
         raise NotImplementedError()
 
     def test_job_info(self):
         """
-        check for job informations
+        Test if Jenkins server accepts fetching job information.
         """
         raise NotImplementedError()
 
     def test_job_build(self):
         """
-        check for job build
+        Test if Jenkins server accepts job build.
         """
         raise NotImplementedError()
 
     def test_job_delete(self):
         """
-        check for job delete
+        Test if Jenkins server accepts job delete.
         """
         raise NotImplementedError()
 
 
 class JenkinsTester:
     """
-    Implementation of Tester using python-jenkins api.
+    Implementation of a Jenkins tester.
     """
 
     TEST_JOB = "__kirk_delete_me"
@@ -93,7 +93,13 @@ class JenkinsTester:
 
     def _prettify_xml(self, xml_str):
         """
-        prettify a xml string
+        Prettify a xml string.
+
+        Args:
+            xml_str(str): A xml string to prettify.
+
+        Returns:
+            str: prettified xml_str.
         """
         dom = xml.dom.minidom.parseString(xml_str)
         pretty_xml = dom.toprettyxml()
@@ -104,9 +110,6 @@ class JenkinsTester:
         return pretty_xml
 
     def test_connection(self):
-        """
-        check for jenkins server connection
-        """
         username = None
         try:
             username = self._server.get_whoami()['fullName']
@@ -119,9 +122,6 @@ class JenkinsTester:
                 (username, self._username))
 
     def test_plugins(self):
-        """
-        check for installed plugins
-        """
         def_plugins = self._config['kirk']['jenkins']['plugins']
 
         plugins_info = None
@@ -141,9 +141,6 @@ class JenkinsTester:
                 raise KirkError("'%s' plugin is required" % plugin_name)
 
     def test_job_create(self):
-        """
-        check for job creation
-        """
         xml_str = """<?xml version='1.1' encoding='UTF-8'?>
             <flow-definition plugin="workflow-job">
                 <description>Testing job for kirk-check command</description>
@@ -163,9 +160,6 @@ class JenkinsTester:
             raise KirkError(err)
 
     def test_job_config(self):
-        """
-        check for job configuration
-        """
         xml_str = """<?xml version='1.1' encoding='UTF-8'?>
             <flow-definition plugin="workflow-job">
                 <description>Testing job for kirk-check command</description>
@@ -197,18 +191,12 @@ class JenkinsTester:
             raise KirkError(err)
 
     def test_job_info(self):
-        """
-        check for job informations
-        """
         try:
             self._server.get_job_info(self.TEST_JOB)
         except jenkins.JenkinsException as err:
             raise KirkError(err)
 
     def test_job_build(self):
-        """
-        check for job build
-        """
         try:
             self._server.build_job(
                 self.TEST_JOB,
@@ -224,9 +212,6 @@ class JenkinsTester:
             raise KirkError(err)
 
     def test_job_delete(self):
-        """
-        check for job delete
-        """
         try:
             self._server.delete_job(self.TEST_JOB)
         except jenkins.JenkinsException as err:

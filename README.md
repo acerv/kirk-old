@@ -2,6 +2,7 @@
 TODO
 ====
 
+- [ ] README documentation
 - [x] jobs dependences checking
 - [x] check minimum jenkins dependences
 - [ ] more robust keyrings configuration
