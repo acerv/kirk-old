@@ -36,7 +36,12 @@ pass_arguments = click.make_pass_decorator(Arguments, ensure=True)
 
 def print_error(err, debug):
     """
-    Print an error message
+    Print an error message and close the application calling sys.exit(1).
+
+    Args:
+        err(Exception): exception to show.
+        debug(bool): if True, this function will print traceback as well as the
+            exception message.
     """
     click.secho("%s" % err, fg="red", bold=True, err=True)
     if debug:
@@ -47,7 +52,13 @@ def print_error(err, debug):
 
 def load_jobs(folder):
     """
-    Return the list of the available jobs.
+    Return the list of the available jobs inside ``folder``.
+
+    Args:
+        folder(str): folder where projects are located.
+
+    Returns:
+        list(:py:class:`JobItem`): list of jobs fetched from ``folder``.
     """
     jobs = None
     try:
@@ -58,13 +69,21 @@ def load_jobs(folder):
         print_error(err, True)
     except ValueError as err:
         print_error(err, False)
+    except TypeError as err:
+        print_error(err, False)
 
     return jobs
 
 
 def load_projects(jobs):
     """
-    Return the list of the available projects.
+    Return the list of the available projects according to ``jobs``.
+
+    Args:
+        jobs(list(:py:class:`JobItem`)): list of jobs.
+
+    Returns:
+        list(str): list of projects for all the given ``jobs``.
     """
     projects = list()
     for job in jobs:
@@ -75,14 +94,39 @@ def load_projects(jobs):
 
 
 @click.group()
-@click.option('-c', '--credentials', default="credentials.cfg", help="credentials file")
-@click.option('-p', '--projects', default="projects", help="projects folder")
-@click.option('-d', '--debug', is_flag=True, default=False, help="debug mode")
-@click.option('-o', '--owner', required=False, nargs=1, default='kirk', help="main user")
+@click.option(
+    '--credentials',
+    '-c',
+    default="credentials.cfg",
+    type=click.Path(exists=False, readable=True),
+    help="File that stores owners credentials (default: credentials.cfg)")
+@click.option(
+    '--projects',
+    '-p',
+    default="projects",
+    type=click.Path(exists=True, readable=True, dir_okay=True),
+    help="Folder containing projects definitions (default: projects)")
+@click.option(
+    '--debug',
+    '-d',
+    is_flag=True,
+    default=False,
+    help="Activate the debug mode for the application (default: False)")
+@click.option(
+    '--owner',
+    '-o',
+    required=False,
+    nargs=1,
+    default='kirk',
+    help="Jenkins user that will create and build jobs (default: kirk)")
 @pass_arguments
 def command_kirk(args, credentials, projects, debug, owner):
     """
-    Kirk - Jenkins remote tester
+    Kirk - Jenkins remote tester.
+
+    This is a tool that can be used to create and run Jenkins jobs, without
+    the need to create them by yourself and taking advantage of groovy scripts
+    saved inside your project.
     """
     # start session
     if debug:
@@ -105,11 +149,15 @@ def command_kirk(args, credentials, projects, debug, owner):
 
 @command_kirk.command(name='list')
 @pass_arguments
-@click.option('-j', '--jobs', is_flag=True, default=False, help="list the available of jobs")
-@click.argument("job_repr", required=False, default=None, nargs=1)
-def show(args, jobs, job_repr):
+@click.option(
+    '-j',
+    '--jobs',
+    is_flag=True,
+    default=False,
+    help="List the available jobs")
+def show(args, jobs):
     """
-    show informations about available projects or jobs
+    Show informations about available projects and jobs.
 
     To show jobs only:
 
@@ -141,7 +189,7 @@ def show(args, jobs, job_repr):
 @click.argument("regexp", nargs=1)
 def search(args, regexp):
     """
-    search for jobs inside project files using regexp
+    Search for available jobs using REGEXP.
 
     Usage:
 
@@ -166,12 +214,22 @@ def search(args, regexp):
 
 @command_kirk.command()
 @pass_arguments
-@click.option('-u', '--user', default="", type=str, help="Jenkins username")
-@click.option('-c', '--change-id', default="", type=str, help="source code change identifier")
+@click.option(
+    '--user',
+    '-u',
+    default="",
+    type=str,
+    help="Name of the developer that is running the job (default: None)")
+@click.option(
+    '--change-id',
+    '-c',
+    default="",
+    type=str,
+    help="Source code change identifier. By default latest is used")
 @click.argument("jobs_repr", nargs=-1)
 def run(args, jobs_repr, user, change_id):
     """
-    run a list of jobs
+    Run a list of jobs as USER with the specified CHANGE_ID.
 
     To run jobs as owner:
 
@@ -179,11 +237,11 @@ def run(args, jobs_repr, user, change_id):
 
     To run jobs as user (it will create a developer folder):
 
-        kirk run -u <myuser> <myproject>::<mytest> ...
+        kirk run -u <myuser> <myproject>::<mytest>
 
     To run jobs in a specific source code change:
 
-        kirk run <myproject>::<mytest> -c <change_id>
+        kirk run  -c <change_id> <myproject>::<mytest>
 
     """
     if not args.jobs:
@@ -245,20 +303,18 @@ def run(args, jobs_repr, user, change_id):
 
 
 @click.command()
-@click.argument("args", nargs=2)
-@click.option('-c', '--credentials', default="credentials.cfg", help="credentials file location")
-def command_credential(args, credentials):
+@click.option(
+    '-c',
+    '--credentials',
+    default="credentials.cfg",
+    type=click.Path(exists=False, writable=True),
+    help="File that stores owners credentials (default: credentials.cfg)")
+@click.argument("url", nargs=1, required=True)
+@click.argument("user", nargs=1, required=True)
+def command_credential(credentials, url, user):
     """
-    Add new credentials inside the credentials file.
-
-    Usage:
-
-        kirk-credential <url> <user>
-
+    Add a new credential for USER and the given URL.
     """
-    url = args[0]
-    user = args[1]
-
     click.secho("saving credential:", fg="white", bold=True)
     click.echo("  url:  %s" % url)
     click.echo("  user: %s" % user)
@@ -275,20 +331,15 @@ def command_credential(args, credentials):
 
 
 @click.command()
-@click.argument("args", nargs=3)
-def command_check(args):
+@click.argument("url", nargs=1, required=True)
+@click.argument("user", nargs=1, required=True)
+@click.argument("token", nargs=1, required=True)
+def command_check(url, user, token):
     """
-    Checks if requisites to run kirk are satisfied.
-    Usage:
-
-        kirk-check <url> <user> <token>
-
+    This tool performs tests to understand if USER is allowed to use kirk,
+    as well as the URL is configured properly.
     """
-    url = args[0]
-    user = args[1]
-    password = args[2]
-
-    tester = JenkinsTester(url, user, password)
+    tester = JenkinsTester(url, user, token)
     tests = {
         'connection test': tester.test_connection,
         'plugins installed': tester.test_plugins,
@@ -302,7 +353,7 @@ def command_check(args):
     click.secho("kirk-check session started\n", fg='yellow', bold=True)
     click.echo("  url: %s" % url)
     click.echo("  user: %s" % user)
-    click.echo("  password: *******\n")
+    click.echo("  token: *******\n")
 
     try:
         length = len(tests)
