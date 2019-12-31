@@ -1,22 +1,14 @@
 
 .. |check| raw:: html
 
-    <input checked=""  type="checkbox">
-
-.. |check_| raw:: html
-
     <input checked=""  disabled="" type="checkbox">
 
 .. |uncheck| raw:: html
 
-    <input type="checkbox">
-
-.. |uncheck_| raw:: html
-
     <input disabled="" type="checkbox">
 
 TODO
-====
+----
 
 | |uncheck| handle multiple job build requests at the same time
 | |uncheck| more robust keyrings configuration
