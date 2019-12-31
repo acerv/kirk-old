@@ -122,7 +122,7 @@ class _GitSCMFlow(XmlBuilder):
                 <extensions/>
                 </scm>
                 <scriptPath>KIRK_SCRIPT_PATH</scriptPath>
-                <lightweight>true</lightweight>
+                <lightweight>false</lightweight>
             </definition>
             <triggers/>
             <disabled>false</disabled>
