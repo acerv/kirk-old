@@ -11,6 +11,7 @@ TODO
 ----
 
 | |uncheck| handle multiple job build requests at the same time
+| |uncheck| more informations in debug mode
 | |uncheck| more robust keyrings configuration
 | |uncheck| create gui
 | |uncheck| documentation 
