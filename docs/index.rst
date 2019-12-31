@@ -7,7 +7,65 @@ Quickstart
 Kirk is a tool that extends Jenkins_ functionalities, creating and building jobs
 automatically, without thinking about their maintainance.
 
-An example of a simple project file inside the ``projects`` folder:
+Kirk will communicate with Jenkins_ using a username which is called **owner**.
+The owner is a user that communicates with Jenkins_ REST API and it has special
+privileges into the server, such as:
+
+  * reading installed plugins
+  * creating a job
+  * configuring a job
+  * fetching job informations
+  * building a job
+  * deleting a job
+
+First of all, check that the Jenkins_ server supports kirk. Run ``kirk-check``
+command with server url, owner name and password in order to verify it:
+
+.. code-block:: bash
+
+  $ kirk-check http://localhost:8080 kirk 1116e370cb9c21990c23de3be450e015ea
+  kirk-check session started
+
+    url: http://localhost:8080
+    user: kirk
+    token: *******
+
+    1/7   connection test  PASSED
+    2/7   plugins installed  PASSED
+    3/7   create job  PASSED
+    4/7   configure job  PASSED
+    5/7   fetching job info  PASSED
+    6/7   build job  PASSED
+    7/7   delete job  PASSED
+
+Great! Our server supports kirk! 
+
+Save your owner name credential with the ``kirk-credential`` command, that will
+store a ``credentials.cfg`` file inside the current folder, if not specified
+otherwise:
+
+.. code-block:: bash
+
+  $ kirk-credential http://localhost:8080 kirk
+  saving credential:
+    url:  http://localhost:8080
+    user: kirk
+    password:
+
+  credential saved
+
+.. note::
+
+  ``credentials.cfg`` is the default credentials file and it's always loaded
+  from the current directory by ``kirk`` command.
+
+Create your own ``projects`` folder where projects are saved.
+
+.. code-block:: bash
+
+  $ mkdir projects
+
+And finally, create the first project file called ``projects/simple.yml``:
 
 .. code-block:: yaml
 
@@ -30,7 +88,7 @@ An example of a simple project file inside the ``projects`` folder:
           pipeline: ci/unittest_pipeline.groovy
 
 To execute ``run_unittest`` job with latest modifications on ``development``
-branch:
+branch, use ``kirk run`` command:
 
 .. parsed-literal::
 
@@ -78,22 +136,12 @@ For example, our ``ci/unittest_pipeline.groovy`` might be defined as following:
   }
 
 More complex pipelines examples are covered into the official Jenkinsfile_
-documentation. Beware to understand the difference between scripted and declared
-pipelines.
+documentation.
 
-This approach has many pros:
+.. note::
 
-  * there's no need to define Jenkins_ jobs manually anymore.
-  * it's really simple to move from one Jenkins_ server to an another.
-  * kirk permits to build Jenkins_ jobs for a particular user with the ``run --user``
-    command, which create a Jenkins_ folder, where user can build jobs without
-    affecting other users jobs.
-  * kirk has its own user called **owner**, who's the one enabled to
-    create/build jobs. This is **crucial**, because with this system it's
-    possible to restrict the users privileges, avoiding jobs updates or bad
-    maintainance.
-  * project files are Yaml files supporting **environmental variables**. This
-    makes really easy to integrate kirk with automation systems.
+  Beware to understand the difference between scripted and declared pipelines
+  when reading the Jenkinsfile_ documentation.
 
 Indices and tables
 ==================
