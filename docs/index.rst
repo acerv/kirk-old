@@ -4,6 +4,12 @@
 Quickstart
 ==========
 
+.. warning::
+
+  kirk is under development and, for now, it's still into a pre-alpha status.
+  If you have any suggestions, feel free to support the project with fresh
+  ideas :-)
+
 Kirk is a tool that extends Jenkins_ functionalities, creating and building jobs
 automatically, without thinking about their maintainance.
 
@@ -142,6 +148,10 @@ documentation.
 
   Beware to understand the difference between scripted and declared pipelines
   when reading the Jenkinsfile_ documentation.
+
+.. toctree::
+
+  todo
 
 Indices and tables
 ==================
