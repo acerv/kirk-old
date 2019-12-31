@@ -40,9 +40,9 @@ command with server url, owner name and password in order to verify it:
 
 Great! Our server supports kirk! 
 
-Save your owner name credential with the ``kirk-credential`` command, that will
-store a ``credentials.cfg`` file inside the current folder, if not specified
-otherwise:
+Save your owner name credential with ``kirk-credential`` command. It will
+store a ``credentials.cfg`` file inside the current folder that contains all
+informations to read owner credentials:
 
 .. code-block:: bash
 
