@@ -169,10 +169,6 @@ class _PerforceSCMFlow(XmlBuilder):
             <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
                 <scm class="org.jenkinsci.plugins.p4.PerforceScm" plugin="p4">
                 <credential>KIRK_P4_CREDENTIAL</credential>
-                <shelf>KIRK_P4_CL</shelf>
-                <ignoreEmpty>false</ignoreEmpty>
-                <resolve>none</resolve>
-                <tidy>false</tidy>
                 <workspace class="org.jenkinsci.plugins.p4.workspace.ManualWorkspaceImpl">
                     <charset>none</charset>
                     <pinHost>false</pinHost>
@@ -197,7 +193,7 @@ class _PerforceSCMFlow(XmlBuilder):
                     <force>false</force>
                     <modtime>false</modtime>
                     <quiet>true</quiet>
-                    <pin></pin>
+                    <pin>KIRK_P4_CL</pin>
                     <parallel>
                     <enable>false</enable>
                     <threads>4</threads>
