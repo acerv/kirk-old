@@ -31,6 +31,7 @@ class Arguments:
         self.debug = False
 
 
+# pylint: disable=invalid-name
 pass_arguments = click.make_pass_decorator(Arguments, ensure=True)
 
 
@@ -204,10 +205,10 @@ def search(args, regexp):
         found = kirk.utils.get_project_regexp(regexp, projects)
         if not found:
             raise KirkError("No jobs found.")
-        else:
-            click.secho("found jobs", fg="white", bold=True)
-            for job in found:
-                click.echo("  %s" % repr(job))
+
+        click.secho("found jobs", fg="white", bold=True)
+        for job in found:
+            click.echo("  %s" % repr(job))
     except KirkError as err:
         print_error(err, args.debug)
 
@@ -274,6 +275,8 @@ def run(args, jobs_repr, user, change_id):
                     jobs_to_run[job_str] = job
                     break
 
+            # get the found job and update parameters
+            job = jobs_to_run[job_str]
             for name, value in params.items():
                 for i in range(0, len(job.parameters)):
                     if job.parameters[i].name == name:

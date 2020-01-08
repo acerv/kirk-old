@@ -19,9 +19,9 @@ def _yaml_constructor(loader, node):
     match = pattern.findall(value)  # to find all env variables in line
     if match:
         full_value = value
-        for g in match:
+        for item in match:
             full_value = full_value.replace(
-                f'${{{g}}}', os.environ.get(g, g)
+                f'${{{item}}}', os.environ.get(item, item)
             )
         return full_value
     return value

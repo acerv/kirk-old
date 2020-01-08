@@ -20,11 +20,12 @@ class XmlBuilder:
     def __init__(self):
         self._re_pattern = re.compile(r'(?P<variable>KIRK_\w+)')
 
-    def _create_param_xml(self, name, label, value):
+    @staticmethod
+    def _create_param_xml(name, label, value):
         """
         create the xml for a job single parameter
         """
-        xml = """
+        xml_str = """
             <hudson.model.StringParameterDefinition>
             <name>%s</name>
             <description>%s</description>
@@ -32,7 +33,7 @@ class XmlBuilder:
             <trim>false</trim>
             </hudson.model.StringParameterDefinition>
         """ % (name, label, value)
-        return xml
+        return xml_str
 
     def _create_params_xml(self, job):
         """
@@ -43,33 +44,33 @@ class XmlBuilder:
         xml_params.append("<parameterDefinitions>\n")
 
         # always add kirk version to parametrize tests
-        xml = self._create_param_xml(
+        xml_str = self._create_param_xml(
             'KIRK_VERSION',
             'Kirk version',
             '0.0')
-        xml_params.append(xml)
+        xml_params.append(xml_str)
 
         if job.parameters:
             for param in job.parameters:
-                xml = self._create_param_xml(
+                xml_str = self._create_param_xml(
                     param.name,
                     param.label,
                     param.value)
-                xml_params.append(xml)
+                xml_params.append(xml_str)
 
         xml_params.append("</parameterDefinitions>")
         xml_params.append("</hudson.model.ParametersDefinitionProperty>")
 
         return '\n'.join(xml_params)
 
-    def _replace_xml_params(self, xml, params):
+    def _replace_xml_params(self, xml_str, params):
         """
         Search inside XML the given parameters and replace them.
         """
         seed_xml = re.sub(
             self._re_pattern,
             lambda m: params[m.group('variable')],
-            xml)
+            xml_str)
 
         return seed_xml
 

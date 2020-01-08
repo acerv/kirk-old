@@ -91,7 +91,8 @@ class JenkinsTester(Tester):
         with open(config_path) as config_data:
             self._config = yaml.safe_load(config_data)
 
-    def _prettify_xml(self, xml_str):
+    @staticmethod
+    def _prettify_xml(xml_str):
         """
         Prettify a xml string.
 
