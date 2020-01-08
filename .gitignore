@@ -8,3 +8,5 @@ credentials.cfg
 .coverage
 .pytest*
 docs/build
+build
+dist
