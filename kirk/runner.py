@@ -165,7 +165,10 @@ class JobRunner(Runner):
                 KIRK_VERSION=__version__
             )
             for param in job.parameters:
-                params[param.name] = param.value
+                if not param.value:
+                    params[param.name] = ""
+                else:
+                    params[param.name] = param.value
 
             self._server.build_job(seed_location, parameters=params)
 
