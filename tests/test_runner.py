@@ -183,29 +183,9 @@ def test_runner_run_with_dev_folder(runner, jobs):
         "myProject/my_dev/admin/test_name0")
 
 
-def test_runner_run_with_change(runner, jobs):
-    """
-    Test run method with change_id parameter
-    """
-    runner.run(jobs[0], change_id="123456")
-
-    jenkins.Jenkins.__init__.assert_called_with(
-        "http://localhost:8080",
-        "kirk",
-        "password")
-    jenkins.Jenkins.build_job.assert_called_with(
-        "myProject/test_name0",
-        parameters=dict(
-            KIRK_VERSION=__version__,
-            MY_PARAM='ABC'
-        ))
-    jenkins.Jenkins.get_job_info.assert_called_with(
-        "myProject/test_name0")
-
-
 def test_runner_run_with_parameter(runner, jobs):
     """
-    Test run method with change_id parameter
+    Test run method with parameters
     """
     jobs[0].parameters[0].value = "DEF"
 

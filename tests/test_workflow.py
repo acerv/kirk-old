@@ -30,6 +30,7 @@ def test_gitflow(tmp_path):
                 git:
                     url: myurl.com/repo.git
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
+                    label: my_branch
         jobs:
             - name: test_seed1
               pipeline: pipeline.groovy
@@ -38,7 +39,7 @@ def test_gitflow(tmp_path):
     proj.load(str(project_file.absolute()))
 
     builder = _GitSCMFlow()
-    xml_str = builder.build_xml(proj.jobs[0], change_id="my_branch")
+    xml_str = builder.build_xml(proj.jobs[0])
 
     tree = ET.fromstring(xml_str)
     tags = dict()
@@ -71,6 +72,7 @@ def test_p4flow(tmp_path):
                     stream: //depot/main
                     workspace: depot_main_workspace
                     credential: fbf1e43a-3442-455e-9c7f-31421a122370
+                    changelist: 654321
         jobs:
             - name: test_seed1
               pipeline: pipeline.groovy
@@ -79,7 +81,7 @@ def test_p4flow(tmp_path):
     proj.load(str(project_file.absolute()))
 
     builder = _PerforceSCMFlow()
-    xml_str = builder.build_xml(proj.jobs[0], change_id="654321")
+    xml_str = builder.build_xml(proj.jobs[0])
 
     tree = ET.fromstring(xml_str)
     tags = dict()
@@ -91,7 +93,7 @@ def test_p4flow(tmp_path):
     assert "name" in tags and tags['name'] == "depot_main_workspace"
     assert "credential" in tags and tags['credential'] == "fbf1e43a-3442-455e-9c7f-31421a122370"
     assert "scriptPath" in tags and tags['scriptPath'] == "pipeline.groovy"
-    assert "shelf" in tags and tags['shelf'] == "654321"
+    assert "pin" in tags and tags['pin'] == "654321"
 
 
 def test_scriptflow(tmp_path):

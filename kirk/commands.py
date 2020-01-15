@@ -221,14 +221,8 @@ def search(args, regexp):
     default="",
     type=str,
     help="Name of the developer that is running the job (default: None)")
-@click.option(
-    '--change-id',
-    '-c',
-    default="",
-    type=str,
-    help="Source code change identifier. By default latest is used")
 @click.argument("jobs_repr", nargs=-1)
-def run(args, jobs_repr, user, change_id):
+def run(args, jobs_repr, user):
     """
     Run a list of jobs as USER with the specified CHANGE_ID.
 
@@ -239,10 +233,6 @@ def run(args, jobs_repr, user, change_id):
     To run jobs as user (it will create a developer folder):
 
         kirk run -u <myuser> <myproject>::<mytest>
-
-    To run jobs in a specific source code change:
-
-        kirk run  -c <change_id> <myproject>::<mytest>
 
     """
     if not args.jobs:
@@ -269,19 +259,27 @@ def run(args, jobs_repr, user, change_id):
 
             project, job_name, params = token
 
+            # search for job inside the list of available jobs
+            found_job = None
             for job in args.jobs:
                 if job_name == job.name and project == job.project.name:
                     # we found the job
-                    jobs_to_run[job_str] = job
+                    found_job = job
                     break
 
+            # no job no party
+            if not found_job:
+                continue
+
             # get the found job and update parameters
-            job = jobs_to_run[job_str]
             for name, value in params.items():
-                for i in range(0, len(job.parameters)):
-                    if job.parameters[i].name == name:
-                        job.parameters[i].value = value
+                for i in range(0, len(found_job.parameters)):
+                    if found_job.parameters[i].name == name:
+                        found_job.parameters[i].value = value
                         break
+
+            # update the list of found jobs
+            jobs_to_run[job_str] = found_job
 
         if len(jobs_to_run) != len(jobs_repr):
             err = "Cannot find the following jobs\n"
@@ -299,7 +297,7 @@ def run(args, jobs_repr, user, change_id):
         # run all tests
         for job_str, job in jobs_to_run.items():
             click.secho("-> running %s (user='%s')" % (job_str, user))
-            job_location = args.runner.run(job, user=user, change_id=change_id)
+            job_location = args.runner.run(job, user=user)
             click.secho("-> configured %s" % job_location, fg="green")
     except KirkError as err:
         print_error(err, args.debug)

@@ -16,7 +16,7 @@ class Runner:
     Base class for Jenkins job runner.
     """
 
-    def run(self, job, user=None, dev_folder="dev", change_id=""):
+    def run(self, job, user=None, dev_folder="dev"):
         """
         Run a jenkins job for the given user. If ``user`` is given, the ending
         url will change according with ``dev_folder`` as following:
@@ -32,9 +32,6 @@ class Runner:
             user(str): user running the job.
             dev_folder(str): folder name where ``user`` jobs are stored
                 (default: 'dev')
-            change_id(str): change identifier storing source code modifications.
-                For example, in Git, ``change_id`` might be the commit hash
-                string. In Perforce it will be the changelist number.
 
         Returns:
             str: url of the job which is building in the jenkins server.
@@ -115,20 +112,19 @@ class JobRunner(Runner):
 
         return dev_location
 
-    def _create_seed(self, location, job, change_id):
+    def _create_seed(self, location, job):
         """
         Create the job seed location.
 
         Args:
             location(str): job location on jenkins server.
             job(:py:class:`kirk.project.JobItem`): job to run.
-            change_id(str): change identifier.
 
         Returns:
             str: location on jenkins server.
         """
         # load the xml configuration according with scm
-        seed_xml = self._workflow.build_xml(job, change_id)
+        seed_xml = self._workflow.build_xml(job)
 
         # create job seed
         seed_location = "/".join([location, job.name])
@@ -142,7 +138,7 @@ class JobRunner(Runner):
 
         return seed_location
 
-    def run(self, job, user=None, dev_folder="dev", change_id=""):
+    def run(self, job, user=None, dev_folder="dev"):
         if not job:
             raise ValueError("job is empty")
 
@@ -162,8 +158,7 @@ class JobRunner(Runner):
                 dev_folder=dev_folder)
 
             # create seed
-            seed_location = self._create_seed(
-                proj_folder, job, change_id)
+            seed_location = self._create_seed(proj_folder, job)
 
             # run seed
             params = dict(

@@ -58,6 +58,9 @@ map:
               credential:
                 required: true
                 type: str
+              changelist:
+                required: false
+                type: int
 
           # git configuration
           git:
@@ -67,6 +70,9 @@ map:
                 required: true
                 type: str
               credential:
+                required: false
+                type: str
+              label:
                 required: false
                 type: str
 

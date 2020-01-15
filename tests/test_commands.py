@@ -306,8 +306,7 @@ def test_kirk_run_with_params(mocker, create_projects):
 
         kirk.runner.JobRunner.run.assert_called_with(
             myjob,
-            user="",
-            change_id=""
+            user=""
         )
 
 
@@ -335,8 +334,7 @@ def test_kirk_run_multiple(mocker, create_projects):
         for job in jobs:
             kirk.runner.JobRunner.run.assert_any_call(
                 job,
-                user="",
-                change_id=""
+                user=""
             )
 
 
@@ -361,34 +359,7 @@ def test_kirk_run_with_user(mocker, create_projects):
         assert ret.exit_code == 0
         kirk.runner.JobRunner.run.assert_called_with(
             mocker.ANY,
-            user="admin",
-            change_id=mocker.ANY,
-        )
-
-
-def test_kirk_run_with_change_id(mocker, create_projects):
-    """
-    test for 'kirk run --change-id' command
-    """
-    mocker.patch('kirk.runner.JobRunner.run')
-
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        create_projects()
-        ret = runner.invoke(
-            kirk.commands.command_kirk,
-            [
-                'run',
-                'project_1::mytest_1',
-                '--change-id',
-                'develop'
-            ],
-        )
-        assert ret.exit_code == 0
-        kirk.runner.JobRunner.run.assert_called_with(
-            mocker.ANY,
-            user=mocker.ANY,
-            change_id="develop"
+            user="admin"
         )
 
 

@@ -44,11 +44,11 @@ class XmlBuilder:
         xml_params.append("<parameterDefinitions>\n")
 
         # always add kirk version to parametrize tests
-        xml_str = self._create_param_xml(
+        xml_version_str = self._create_param_xml(
             'KIRK_VERSION',
             'Kirk version',
             '0.0')
-        xml_params.append(xml_str)
+        xml_params.append(xml_version_str)
 
         if job.parameters:
             for param in job.parameters:
@@ -74,15 +74,12 @@ class XmlBuilder:
 
         return seed_xml
 
-    def build_xml(self, job, change_id=""):
+    def build_xml(self, job):
         """
         Converts the ``job`` item into a Jenkins job XML configuration.
 
         Args:
             job(:py:class:`kirk.project.JobItem`): job item to convert.
-            change_id(str): change identifier storing source code modifications.
-                For example, in Git, ``change_id`` might be the commit hash
-                string. In Perforce it will be the changelist number.
 
         Returns:
             str: Jenkins job XML configuration.
@@ -130,23 +127,23 @@ class _GitSCMFlow(XmlBuilder):
         </flow-definition>
     """
 
-    def build_xml(self, job, change_id=""):
+    def build_xml(self, job):
         if not job.scm:
             return None
 
         if 'git' not in job.scm:
             return None
 
-        checkout = "master"
-        if change_id:
-            checkout = change_id
+        commit = "master"
+        if 'label' in job.scm['git']:
+            commit = job.scm['git']['label']
 
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
         params["KIRK_SCRIPT_PATH"] = job.pipeline
         params["KIRK_GIT_CREDENTIAL"] = job.scm["git"].get("credential", "")
         params["KIRK_GIT_URL"] = job.scm["git"]["url"]
-        params["KIRK_GIT_CHECKOUT"] = checkout
+        params["KIRK_GIT_CHECKOUT"] = commit
         params['KIRK_PARAMETERS'] = self._create_params_xml(job)
 
         seed_xml = self._replace_xml_params(self.SEED_XML, params)
@@ -214,7 +211,7 @@ class _PerforceSCMFlow(XmlBuilder):
         </flow-definition>
     """
 
-    def build_xml(self, job, change_id=""):
+    def build_xml(self, job):
         if not job.scm:
             return None
 
@@ -222,10 +219,8 @@ class _PerforceSCMFlow(XmlBuilder):
             return None
 
         changelist = ""
-        if change_id:
-            # it will raise a ValueError exception is it's not an int
-            int(change_id)
-            changelist = change_id
+        if 'changelist' in job.scm['perforce']:
+            changelist = str(job.scm['perforce']['changelist'])
 
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
@@ -263,11 +258,9 @@ class _ScriptFlow(XmlBuilder):
         </flow-definition>
     """
 
-    def build_xml(self, job, change_id=""):
+    def build_xml(self, job):
         if job.scm is None or 'none' not in job.scm:
             return None
-
-        del change_id
 
         params = dict()
         params["KIRK_DESCRIPTION"] = "Created by kirk in date %s" % date.today()
@@ -302,10 +295,10 @@ class WorkflowBuilder(XmlBuilder):
         _ScriptFlow()
     ]
 
-    def build_xml(self, job, change_id=""):
+    def build_xml(self, job):
         xml_str = None
         for builder in self._BUILDERS:
-            xml_str = builder.build_xml(job, change_id)
+            xml_str = builder.build_xml(job)
             if xml_str:
                 break
 
