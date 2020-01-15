@@ -221,7 +221,7 @@ class _PerforceSCMFlow(XmlBuilder):
         if 'perforce' not in job.scm:
             return None
 
-        changelist = "latest"
+        changelist = ""
         if change_id:
             # it will raise a ValueError exception is it's not an int
             int(change_id)
