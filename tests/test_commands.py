@@ -25,6 +25,11 @@ def create_projects():
                 location: myProject_0
                 defaults:
                     server: http://localhost:8080
+                    parameters:
+                    - name: PARAM_0
+                      label: parameter zero
+                      default: zero
+                      show: true
                 jobs:
                     - name: mytest_0
                     - name: mytest_1
@@ -148,8 +153,8 @@ def test_kirk_list_jobs(create_projects):
         create_projects()
         ret = runner.invoke(kirk.commands.command_kirk, ['list', '--jobs'])
         assert ret.exit_code == 0
-        assert 'project_0::mytest_0' in ret.output
-        assert 'project_0::mytest_1' in ret.output
+        assert 'project_0::mytest_0[PARAM_0=zero]' in ret.output
+        assert 'project_0::mytest_1[PARAM_0=zero]' in ret.output
         assert 'project_1::mytest_0' in ret.output
         assert 'project_1::mytest_1[PARAM_0=zero]' in ret.output
 
@@ -163,8 +168,8 @@ def test_kirk_list_projects(create_projects):
         create_projects()
         ret = runner.invoke(kirk.commands.command_kirk, ['list'])
         assert ret.exit_code == 0
-        assert 'project_0::mytest_0' in ret.output
-        assert 'project_0::mytest_1' in ret.output
+        assert 'project_0::mytest_0[PARAM_0=zero]' in ret.output
+        assert 'project_0::mytest_1[PARAM_0=zero]' in ret.output
         assert 'project_1::mytest_0' in ret.output
         assert 'project_1::mytest_1[PARAM_0=zero]' in ret.output
 
